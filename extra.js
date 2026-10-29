@@ -7,7 +7,7 @@
   v.autoplay = true; v.loop = true; v.playsInline = true;
   v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
   v.preload = 'auto';
-  v.src = '/hero.mp4';
+  v.src = '/hero-hd.mp4';
   v.addEventListener('playing', function () { hero.classList.add('has-video'); });
   var img = hero.querySelector('.hero-img');
   if (img) img.insertAdjacentElement('afterend', v); else hero.prepend(v);

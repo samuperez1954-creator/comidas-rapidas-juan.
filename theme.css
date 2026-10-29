@@ -159,6 +159,6 @@ html{scroll-padding-top:100px}
 .hero.has-video .hero-img{opacity:0!important;transition:opacity .7s ease}
 @media (min-width:901px){
 .hero-video{left:30%;width:70%;object-position:58% 78%}
-.hero.has-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.98) 30%,rgba(89,42,42,.6) 44%,rgba(89,42,42,.14) 70%,rgba(43,18,18,.04) 100%)!important}
+.hero.has-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.97) 30%,rgba(89,42,42,.42) 43%,rgba(89,42,42,.06) 62%,rgba(43,18,18,0) 100%)!important}
 }
-@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.45) 0%,rgba(89,42,42,.78) 55%,rgba(43,18,18,.95) 100%)!important}.hero h1{max-width:11ch}}
+@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.35) 0%,rgba(89,42,42,.62) 50%,rgba(43,18,18,.92) 100%)!important}.hero h1{max-width:11ch}}
