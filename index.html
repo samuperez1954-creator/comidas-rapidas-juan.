@@ -612,7 +612,7 @@ dialog.small{width:min(92vw,440px);border-radius:20px;padding:24px}
 <div class="container">
 <div class="crumbs"><a href="#inicio">Inicio</a> / <a href="#menu">Menú</a> / Carrito</div>
 <h1 class="h-display">Carrito de compras</h1>
-<ol class="steps"><li class="on">1. Carrito</li><li>2. Datos de entrega</li><li>3. Pago</li></ol>
+<ol class="steps"><li class="on">1. Carrito</li><li id="pasoDatos">2. Datos de entrega</li><li>3. Pago</li></ol>
 </div>
 </section>
 <div class="container cart-layout">
@@ -631,23 +631,31 @@ dialog.small{width:min(92vw,440px);border-radius:20px;padding:24px}
 <h3>Cupón</h3>
 <div class="cprow"><input id="cpInput" type="text" placeholder="Código" maxlength="16" autocomplete="off" aria-label="Código del cupón"><button type="button" id="cpApply">Aplicar</button></div>
 <p class="msg" id="cpMsg" role="status"></p>
-<h3>Datos de entrega</h3>
+<h3>Tipo de servicio</h3>
+<div class="pays servicio">
+<label><input type="radio" name="servicio" value="domicilio" checked><span>🛵 A domicilio<small>Te lo llevamos a tu casa · desde $ 15.000</small></span></label>
+<label><input type="radio" name="servicio" value="tienda"><span>🏪 Recoger en tienda<small>Sin costo de domicilio · Cra. 81 # 32, Belén</small></span></label>
+</div>
+<h3 id="datosTit">Datos de entrega</h3>
 <label class="f" style="margin-top:10px">Nombre<input id="fName" type="text" autocomplete="name"></label>
 <label class="f">Celular<input id="fTel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="300 123 4567"></label>
+<div id="entregaCampos">
 <label class="f">Dirección<input id="fAddr" type="text" autocomplete="street-address" placeholder="Ej: Cra 80 # 30-15, apto 201"></label>
 <label class="f">Barrio<input id="fBarrio" type="text" placeholder="Ej: Belén La Palma"></label>
+</div>
+<p class="note" id="tiendaInfo" hidden>📍 Recoges en <b>Cra. 81 # 32 312 a 32 20, Nueva Villa del Aburrá, Belén</b>. Te avisamos por WhatsApp cuando tu pedido esté listo.</p>
 <h3>¿Cómo quieres pagar?</h3>
 <div class="pays">
 <label><input type="radio" name="pago" value="online" checked><span>Pagar en línea<small>Tarjeta, PSE o Nequi</small></span></label>
-<label><input type="radio" name="pago" value="contra"><span>Pagar al recibir<small>Efectivo o transferencia al domiciliario</small></span></label>
+<label><input type="radio" name="pago" value="contra"><span id="contraTxt">Pagar al recibir<small>Efectivo o transferencia al domiciliario</small></span></label>
 </div>
 </div>
 <div class="cart-sum" id="cartFoot">
 <div class="sum"><span>Subtotal</span><span id="sSub">$ 0</span></div>
 <div class="sum disc" id="sDiscRow" hidden><span id="sDiscLbl"></span><span id="sDisc"></span></div>
-<div class="sum"><span>Domicilio</span><span>Desde $ 15.000</span></div>
+<div class="sum"><span id="sDomLbl">Domicilio</span><span id="sDom">Desde $ 15.000</span></div>
 <div class="sum total"><span>Total</span><span id="sTot">$ 0</span></div>
-<p class="note">El valor exacto del domicilio se confirma según tu barrio.</p>
+<p class="note" id="domNota">El valor exacto del domicilio se confirma según tu barrio.</p>
 <p class="err" id="err" role="alert"></p>
 <button class="bigbtn" type="button" id="checkout" style="width:100%;margin-top:10px">Finalizar compra</button>
 </div>
@@ -1920,10 +1928,23 @@ if (d) { $('#sDiscLbl').textContent = 'Cupón ' + cupon.codigo; $('#sDisc').text
 $('#sTot').textContent = fmt(total());
 $('#promoWarn').hidden = !ls.some(l => ITEMS[l.id].promo && !promoActiva(ITEMS[l.id]));
 const online = ($('input[name="pago"]:checked') || {}).value === 'online';
+pintarServicio();
 $('#checkout').innerHTML = online ? CART_ICO + '<span>Finalizar compra · ' + fmt(total()) + '</span>' : 'Enviar pedido por WhatsApp';
 $('#checkout').className = 'bigbtn' + (online ? '' : ' green');
 }
 $$('input[name="pago"]').forEach(r => r.addEventListener('change', pintarCarrito));
+const enTienda = () => ($('input[name="servicio"]:checked') || {}).value === 'tienda';
+function pintarServicio() {
+const t = enTienda();
+$('#entregaCampos').hidden = t; $('#tiendaInfo').hidden = !t;
+$('#datosTit').textContent = t ? 'Datos para recoger' : 'Datos de entrega';
+$('#pasoDatos').textContent = t ? '2. Datos para recoger' : '2. Datos de entrega';
+$('#sDomLbl').textContent = t ? 'Recoger en tienda' : 'Domicilio';
+$('#sDom').textContent = t ? 'Sin costo' : 'Desde $ 15.000';
+$('#domNota').textContent = t ? 'Pasa por tu pedido en el local; te avisamos cuando esté listo.' : 'El valor exacto del domicilio se confirma según tu barrio.';
+$('#contraTxt').innerHTML = t ? 'Pagar en la tienda<small>Efectivo o transferencia al recoger</small>' : 'Pagar al recibir<small>Efectivo o transferencia al domiciliario</small>';
+}
+$$('input[name="servicio"]').forEach(r => r.addEventListener('change', () => { $('#err').textContent = ''; pintarCarrito(); }));
 $('#cartSide').addEventListener('focusin', e => { if (e.target.matches('#fName,#fTel,#fAddr,#fBarrio')) $$('.steps li').forEach((li, k) => li.classList.toggle('on', k <= 1)); });
 $('#cartClear').addEventListener('click', () => { cart.clear(); cupon = null; store.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = ''; refrescar(); });
 const cartDlg = { close() {}, showModal() {} };
@@ -1946,20 +1967,21 @@ function datos() {
 const nombre = $('#fName').value.trim(), tel = $('#fTel').value.replace(/\D/g, ''), dir = $('#fAddr').value.trim(), barrio = $('#fBarrio').value.trim(), err = $('#err');
 if (!nombre) { err.textContent = 'Escribe tu nombre.'; $('#fName').focus(); return null; }
 if (!/^3\d{9}$/.test(tel.replace(/^57/, ''))) { err.textContent = 'Escribe un celular válido de 10 dígitos.'; $('#fTel').focus(); return null; }
-if (!dir) { err.textContent = 'Escribe la dirección de entrega.'; $('#fAddr').focus(); return null; }
+if (!enTienda() && !dir) { err.textContent = 'Escribe la dirección de entrega.'; $('#fAddr').focus(); return null; }
 err.textContent = '';
-return { nombre, tel, dir, barrio };
+return { nombre, tel, dir, barrio, tienda: enTienda() };
 }
 function textoPedido(d, pago, ref) {
 return [
-'🛵 *Nuevo pedido · ' + NEGOCIO + '*' + (ref ? ' (' + ref + ')' : ''), '',
+(d.tienda ? '🏪' : '🛵') + ' *Nuevo pedido · ' + NEGOCIO + '*' + (ref ? ' (' + ref + ')' : ''), '',
 ...lineas().map(l => { const i = ITEMS[l.id]; return `• ${l.qty} × ${i.nombre}${l.op ? ' (' + l.op + ')' : ''} – ${fmt(l.qty * i.precio)}${l.nota ? '\n   Nota: ' + l.nota : ''}`; }), '',
 'Subtotal: ' + fmt(sub()),
 ...(desc() ? ['Cupón ' + cupon.codigo + ': - ' + fmt(desc())] : []),
-'*Total productos: ' + fmt(total()) + '* + domicilio',
+'*Total productos: ' + fmt(total()) + '*' + (d.tienda ? '' : ' + domicilio'),
+'Servicio: ' + (d.tienda ? '🏪 Recoger en tienda' : '🛵 A domicilio'),
 'Pago: ' + pago, '',
 '👤 ' + d.nombre + ' · ' + d.tel,
-'📍 ' + d.dir + (d.barrio ? ', ' + d.barrio : ''),
+...(d.tienda ? ['📍 Recoge en el local (Cra. 81 # 32, Belén)'] : ['📍 ' + d.dir + (d.barrio ? ', ' + d.barrio : '')]),
 ...(SRC ? ['Llegó desde: ' + SRC] : [])
 ].join('\n');
 }
@@ -1970,7 +1992,7 @@ if (!d) return;
 const online = ($('input[name="pago"]:checked') || {}).value === 'online';
 if (!online) {
 const a = document.createElement('a');
-a.href = waBase + encodeURIComponent(textoPedido(d, 'Al recibir')); a.target = '_blank'; a.rel = 'noopener';
+a.href = waBase + encodeURIComponent(textoPedido(d, d.tienda ? 'En la tienda' : 'Al recibir')); a.target = '_blank'; a.rel = 'noopener';
 document.body.appendChild(a); a.click(); a.remove();
 return;
 }
@@ -1980,7 +2002,7 @@ $('#payBody').innerHTML = `
 <h2 class="h-display">Pago seguro</h2>
 <p class="note">Pedido ${ref} · ${esc(NEGOCIO)}</p>
 <div class="sum total" style="margin-top:12px"><span>A pagar ahora</span><span>${fmt(total())}</span></div>
-<p class="note">El domicilio se paga al recibir.</p>
+<p class="note">${d.tienda ? 'Recoges tu pedido en la tienda, sin costo de domicilio.' : 'El domicilio se paga al recibir.'}</p>
 <div class="paylogo"><span>💳 Tarjeta</span><span>🏦 PSE</span><span>📱 Nequi</span></div>
 <p class="warn">Demo: aquí se abre la pasarela de pagos del negocio (Wompi, ePayco o Mercado Pago). No se hace ningún cobro.</p>
 <div class="row2"><button type="button" data-close>Volver</button><button type="button" class="solid" id="payOk">Simular pago</button></div>`;
@@ -1989,7 +2011,7 @@ $('#payBody').innerHTML = `
 <div class="okbig"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
 <h2 class="h-display">¡Pedido recibido!</h2>
 <p>Pago de ${fmt(total())} aprobado. Pedido <b>${ref}</b>.</p>
-<p class="note">La cocina ya lo tiene. Te escribimos por WhatsApp al ${esc(d.tel)} cuando salga el domiciliario.</p>
+<p class="note">La cocina ya lo tiene. Te escribimos por WhatsApp al ${esc(d.tel)} ${d.tienda ? 'cuando esté listo para recoger en la tienda' : 'cuando salga el domiciliario'}.</p>
 <div class="row2"><button type="button" class="solid" id="payDone">Listo</button></div>`;
 cart.clear(); cupon = null; store.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = '';
 refrescar(); tick();
