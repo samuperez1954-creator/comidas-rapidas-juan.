@@ -1,0 +1,164 @@
+/* Comidas Rápidas Juan · paleta oficial de la tienda (Medellín)
+   Arena #D0B892 · Mostaza #D9A404 · Caramelo #A64F03 · Salsa #D53000 · Vino #592A2A */
+:root{
+--arena:#D0B892; --caramelo:#A64F03; --vino:#592A2A;
+--carbon:#2B1212; --carbon-2:#3E1C1C; --carbon-3:#592A2A;
+--mostaza:#D9A404; --mostaza-claro:#F6EBCB;
+--salsa:#D53000; --salsa-osc:#A82600;
+--fondo:#FBF6EC; --blanco:#FFFFFF; --linea:#E8DAC2;
+--texto:#2B1212; --suave:#6F5A4C;
+--display:'Bricolage Grotesque','Arial Narrow',sans-serif;
+--body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+--script:'Caveat Brush','Segoe Print',cursive;
+}
+body{background:var(--fondo)}
+.h-display{font-family:var(--display);font-weight:800;font-variation-settings:"wdth" 80,"opsz" 96;letter-spacing:-.5px;line-height:.95}
+
+/* Franja superior y barra */
+.topbar{background:linear-gradient(90deg,var(--salsa) 0%,#C23A00 55%,var(--caramelo) 100%)}
+.nav{background:rgba(43,18,18,.97);box-shadow:0 1px 0 rgba(217,164,4,.25)}
+.nav-links a{color:#F1E4CC}
+.brand-name{font-family:var(--display);font-weight:800;font-variation-settings:"wdth" 80,"opsz" 96;letter-spacing:0}
+.brand-name span{font-family:var(--script);font-weight:400;font-size:21px;letter-spacing:.5px;text-transform:none;line-height:.9;margin-top:1px}
+@media (max-width:480px){.brand-name span{font-size:17px}}
+.btn{font-family:var(--body)}
+.btn-primary{background:var(--mostaza);color:var(--carbon);box-shadow:0 6px 18px rgba(217,164,4,.35)}
+.btn-primary:hover{background:#ECB60B}
+.btn-red,.cartbtn.big,.pcard .add,.bigbtn{box-shadow:0 6px 16px rgba(213,48,0,.28)}
+.bigbtn.green,.bigbtn.dark{box-shadow:none}
+.mobile-menu{border-top-color:#4A2424}
+.mobile-menu a{border-bottom-color:#4A2424}
+
+/* Portada */
+.hero{background:var(--carbon)}
+.hero::after{background:linear-gradient(90deg,rgba(43,18,18,.94) 0%,rgba(89,42,42,.78) 42%,rgba(89,42,42,.18) 75%,rgba(43,18,18,.05) 100%)!important}
+@media (max-width:900px){.hero::after{background:linear-gradient(180deg,rgba(43,18,18,.5) 0%,rgba(89,42,42,.82) 55%,rgba(43,18,18,.96) 100%)!important}}
+.hero h1{letter-spacing:-1px}
+.hero h1 em{font-family:var(--script);font-weight:400;text-transform:none;color:var(--mostaza);font-size:1.12em;letter-spacing:0;display:inline-block;transform:rotate(-3deg);padding:0 .06em}
+.hero p.lead{color:#F3E7D3}
+.hero-stats div b{color:var(--mostaza)}
+.hero-stats div span{color:var(--arena)}
+.from{background:var(--mostaza)}
+
+/* Títulos de sección con acento */
+.sec-head h2,.mcat h2,.about h2,.club h2,.scan-h,.page-head h1{position:relative}
+.sec-head h2::after,.about h2::after,.club h2::after,.scan-h::after{content:"";display:block;width:64px;height:6px;border-radius:6px;margin-top:12px;background:linear-gradient(90deg,var(--salsa) 0 50%,var(--mostaza) 50% 100%)}
+.club h2::after{background:linear-gradient(90deg,var(--salsa) 0 50%,var(--vino) 50% 100%)}
+.about h2 em{font-family:var(--script);font-weight:400;text-transform:none;font-size:1.1em;color:var(--mostaza)}
+.link-more{color:var(--salsa)}
+
+/* Tarjetas de producto */
+.pcard{border-color:var(--linea)}
+.pcard:hover{box-shadow:0 16px 34px rgba(89,42,42,.16)}
+.pcard h3{font-family:var(--body);font-weight:800;color:var(--texto)}
+.pcard .price{color:var(--salsa)}
+.badge{background:var(--mostaza);color:var(--carbon)}
+.badge.hot{background:#FBE0D5;color:var(--salsa-osc)}
+
+/* Categorías */
+.cat-tile{background:var(--vino)}
+.cat-tile::after{background:linear-gradient(180deg,rgba(89,42,42,0) 35%,rgba(43,18,18,.88))}
+.cat-tile span{font-family:var(--display);font-weight:800;font-variation-settings:"wdth" 80,"opsz" 96;font-size:21px;letter-spacing:-.2px}
+.cat-tile small{color:var(--arena)}
+
+/* Nosotros */
+.about{background:radial-gradient(1200px 500px at 85% 20%,#6B3030 0%,var(--vino) 45%,var(--carbon) 100%)}
+.about p{color:#EFDFC6}
+.feat{background:rgba(43,18,18,.55);border-color:rgba(208,184,146,.25)}
+.feat b{font-family:var(--display);font-weight:800;color:var(--mostaza)}
+.feat span{color:var(--arena)}
+
+/* Ubicación */
+.info-row .ic{background:var(--mostaza-claro);color:var(--caramelo)}
+.info-row a{color:var(--salsa)}
+.map{background-color:var(--vino)}
+
+/* Cupones */
+.coupon-band{background:linear-gradient(90deg,var(--salsa),var(--caramelo))}
+.coupon-band b{font-family:var(--display);font-weight:800}
+.coupon-band .btn{color:var(--salsa)}
+.club{background:var(--mostaza);background-image:radial-gradient(rgba(166,79,3,.16) 1.5px,transparent 1.6px);background-size:18px 18px}
+.club form{box-shadow:0 22px 44px rgba(89,42,42,.22)}
+
+/* Escanéanos */
+.scan{background:linear-gradient(160deg,var(--carbon) 0%,var(--vino) 100%)}
+.scan-p,.scan .sec-head p{color:#EBDAC0}
+.scan-link{background:rgba(43,18,18,.6);border-color:rgba(208,184,146,.22)}
+.scan-link:hover{background:rgba(213,48,0,.25)}
+.scan-link small{color:var(--arena)}
+.scan-badge{background:var(--mostaza);color:var(--carbon);font-family:var(--display);font-weight:800}
+.scan-qr1{border-color:var(--vino)}
+
+/* Páginas internas */
+.page-head{background:var(--carbon)}
+.page-head img{opacity:.42!important}
+.page-head::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(43,18,18,.9),rgba(89,42,42,.45))}
+.page-head .container{z-index:1}
+.crumbs{color:var(--arena)}
+.page-head .meta span{background:rgba(208,184,146,.18)}
+.steps li{color:var(--arena)}
+.side nav button[aria-current="true"]{background:var(--vino)}
+.side nav button:hover{background:#F2E7D4}
+.side nav button small{color:#9C8574}
+.xbtn,.stepper button{background:#F2E7D4}
+.pays label:has(input:checked){background:#FAF1E1;border-color:var(--vino)}
+.tg{color:var(--caramelo)}
+.warn{color:#6B3A02}
+.pd-body .pr{color:var(--salsa)}
+.cart-table-head,.cart-sum{border-color:var(--vino)}
+.btn-outline-dark{border-color:var(--vino);color:var(--vino)}
+dialog::backdrop{background:rgba(43,18,18,.62)}
+
+/* Pie de página con franja de la paleta */
+footer{background:var(--carbon);color:#E3D2B7;position:relative}
+footer::before{content:"";display:block;height:8px;background:linear-gradient(90deg,var(--arena) 0 20%,var(--mostaza) 20% 40%,var(--caramelo) 40% 60%,var(--salsa) 60% 80%,var(--vino) 80% 100%)}
+footer h4{font-family:var(--display);font-weight:800;color:var(--mostaza)}
+.soc{background:var(--vino)}
+.soc:hover{background:var(--salsa)}
+.foot-bottom{border-top-color:#4A2424}
+.foot-bottom button{color:#E3D2B7}
+.cartpill{box-shadow:0 14px 30px rgba(213,48,0,.4)}
+.hero h1{max-width:14ch}
+.hero-stats div b,.feat b,.map-fb b,footer h4,.coupon-band b{font-weight:800;font-variation-settings:"wdth" 80,"opsz" 96}
+/* Barra de navegación más grande, logo protagonista */
+html{scroll-padding-top:100px}
+.nav .container{height:92px;gap:22px}
+.brand{gap:14px}
+.brand-logo{width:76px!important;height:76px!important;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(217,164,4,.28))!important;transition:transform .2s}
+.brand:hover .brand-logo{transform:rotate(-4deg) scale(1.04)}
+.brand-name{font-size:27px}
+.brand-name span{font-size:27px}
+.nav-links a{font-size:16.5px;padding:12px 14px}
+.nav .btn-primary{padding:14px 26px;font-size:16px}
+.cartbtn.big{height:52px;padding:0 20px 0 16px;font-size:16px}
+.burger{width:50px;height:50px}
+.side{top:112px}
+.cart-side{top:112px}
+@media (min-width:961px) and (max-width:1400px){
+.nav .container{gap:14px}
+.brand-name{font-size:23px}.brand-name span{font-size:23px}
+.nav-links a{padding:10px 9px;font-size:15px}
+.nav .btn-primary{padding:12px 18px;font-size:15px}
+}
+@media (min-width:961px) and (max-width:1180px){.brand-logo{width:66px!important;height:66px!important}.brand-name{font-size:20px}.brand-name span{font-size:20px}.nav-links a{padding:8px 6px;font-size:14px}}
+@media (max-width:960px){.nav .container{height:80px}.side{top:80px}}
+@media (max-width:480px){
+.nav .container{height:76px}
+.side{top:76px}
+.brand-logo{width:60px!important;height:60px!important}
+.brand-name{font-size:18px}.brand-name span{font-size:20px}
+.cartbtn.big{height:46px;padding:0 12px}
+.burger{width:46px;height:46px}
+}
+@media (max-width:360px){.brand-logo{width:52px!important;height:52px!important}.brand-name{font-size:15px}.brand-name span{font-size:17px}}
+@media (min-width:1401px){.nav .container{gap:16px}.nav-links a{padding:10px 10px;font-size:16px}.brand-name,.brand-name span{font-size:25px}.nav .btn-primary{padding:13px 22px}}
+@media (min-width:1401px){.nav .container,.topbar .container{max-width:1360px}}
+/* Video de portada (sin sonido) */
+.hero-video{position:absolute;top:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s ease}
+.hero.has-video .hero-video{opacity:1}
+.hero.has-video .hero-img{opacity:0!important;transition:opacity .7s ease}
+@media (min-width:901px){
+.hero-video{left:30%;width:70%;object-position:58% 78%}
+.hero.has-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.98) 30%,rgba(89,42,42,.6) 44%,rgba(89,42,42,.14) 70%,rgba(43,18,18,.04) 100%)!important}
+}
+@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.45) 0%,rgba(89,42,42,.78) 55%,rgba(43,18,18,.95) 100%)!important}.hero h1{max-width:11ch}}
