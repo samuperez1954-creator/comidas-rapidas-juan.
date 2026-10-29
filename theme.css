@@ -153,13 +153,14 @@ html{scroll-padding-top:100px}
 @media (max-width:360px){.brand-logo{width:52px!important;height:52px!important}.brand-name{font-size:15px}.brand-name span{font-size:17px}}
 @media (min-width:1401px){.nav .container{gap:16px}.nav-links a{padding:10px 10px;font-size:16px}.brand-name,.brand-name span{font-size:25px}.nav .btn-primary{padding:13px 22px}}
 @media (min-width:1401px){.nav .container,.topbar .container{max-width:1360px}}
-/* Video de portada (sin sonido) */
-.hero-video{position:absolute;top:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s ease}
-.hero.has-video .hero-video{opacity:1}
-.hero.has-video .hero-img{opacity:0!important;transition:opacity .7s ease}
+/* Video de portada (sin sonido): visible desde el primer instante, sin controles */
+.hero-video{position:absolute;top:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;background:var(--carbon);pointer-events:none}
+.hero-video::-webkit-media-controls,.hero-video::-webkit-media-controls-panel,.hero-video::-webkit-media-controls-play-button,.hero-video::-webkit-media-controls-start-playback-button,.hero-video::-webkit-media-controls-overlay-play-button{display:none!important;-webkit-appearance:none!important;opacity:0!important}
+.hero:not(.no-video) .hero-img{display:none!important}
+.hero.no-video .hero-video{display:none}
 @media (min-width:901px){
 .hero-video{left:30%;width:70%;object-position:58% 78%}
-.hero.has-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.97) 30%,rgba(89,42,42,.42) 43%,rgba(89,42,42,.06) 62%,rgba(43,18,18,0) 100%)!important}
+.hero:not(.no-video)::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.97) 30%,rgba(89,42,42,.42) 43%,rgba(89,42,42,.06) 62%,rgba(43,18,18,0) 100%)!important}
 }
-@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.28) 0%,rgba(89,42,42,.5) 45%,rgba(43,18,18,.88) 100%)!important}.hero h1{max-width:11ch}}
-@media (max-width:900px){.hero.has-video h1,.hero.has-video p.lead,.hero.has-video .hero-stats{text-shadow:0 2px 14px rgba(43,18,18,.75),0 1px 3px rgba(0,0,0,.5)}}
+@media (max-width:900px){.hero-video{object-position:50% 70%}.hero:not(.no-video)::after{background:linear-gradient(180deg,rgba(43,18,18,.28) 0%,rgba(89,42,42,.5) 45%,rgba(43,18,18,.88) 100%)!important}.hero h1{max-width:11ch}}
+@media (max-width:900px){.hero:not(.no-video) h1,.hero:not(.no-video) p.lead,.hero:not(.no-video) .hero-stats{text-shadow:0 2px 14px rgba(43,18,18,.75),0 1px 3px rgba(0,0,0,.5)}}
