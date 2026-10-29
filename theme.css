@@ -161,4 +161,5 @@ html{scroll-padding-top:100px}
 .hero-video{left:30%;width:70%;object-position:58% 78%}
 .hero.has-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.97) 30%,rgba(89,42,42,.42) 43%,rgba(89,42,42,.06) 62%,rgba(43,18,18,0) 100%)!important}
 }
-@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.35) 0%,rgba(89,42,42,.62) 50%,rgba(43,18,18,.92) 100%)!important}.hero h1{max-width:11ch}}
+@media (max-width:900px){.hero-video{object-position:50% 70%}.hero.has-video::after{background:linear-gradient(180deg,rgba(43,18,18,.28) 0%,rgba(89,42,42,.5) 45%,rgba(43,18,18,.88) 100%)!important}.hero h1{max-width:11ch}}
+@media (max-width:900px){.hero.has-video h1,.hero.has-video p.lead,.hero.has-video .hero-stats{text-shadow:0 2px 14px rgba(43,18,18,.75),0 1px 3px rgba(0,0,0,.5)}}
