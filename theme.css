@@ -164,3 +164,10 @@ html{scroll-padding-top:100px}
 }
 @media (max-width:900px){.hero-video{object-position:50% 70%}.hero:not(.no-video)::after{background:linear-gradient(180deg,rgba(43,18,18,.28) 0%,rgba(89,42,42,.5) 45%,rgba(43,18,18,.88) 100%)!important}.hero h1{max-width:11ch}}
 @media (max-width:900px){.hero:not(.no-video) h1,.hero:not(.no-video) p.lead,.hero:not(.no-video) .hero-stats{text-shadow:0 2px 14px rgba(43,18,18,.75),0 1px 3px rgba(0,0,0,.5)}}
+/* Celular: el video se ve completo arriba (16:9), y el texto debajo sobre fondo vino */
+@media (max-width:900px){
+.hero-video{top:0;bottom:auto;height:auto;aspect-ratio:16/9;object-fit:cover;object-position:50% 50%}
+.hero:not(.no-video) .container{padding-top:calc(56.25vw - 22px)}
+.hero:not(.no-video)::after{background:linear-gradient(180deg,rgba(43,18,18,0) 0,rgba(43,18,18,0) calc(56.25vw - 120px),rgba(43,18,18,.6) calc(56.25vw - 50px),rgba(43,18,18,.92) calc(56.25vw - 14px),var(--carbon) calc(56.25vw - 1px),var(--carbon) 100%)!important}
+.hero:not(.no-video){background:var(--carbon)}
+}
