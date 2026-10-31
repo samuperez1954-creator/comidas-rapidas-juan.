@@ -1665,6 +1665,12 @@ const store = {
 get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
 set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+// El carrito y el cupón aplicado solo duran mientras la pestaña está abierta: cada visita nueva empieza vacía
+const sesion = {
+get(k, d) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+try { localStorage.removeItem('crv_carrito'); localStorage.removeItem('crv_cupon'); } catch (e) {}
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1800); }
 const imgTag = i => `<img src="${esc(i.img)}" data-alt="${esc(i.ilusSrc)}" alt="${esc(i.nombre)}" loading="lazy"${i.estilo ? ` style="${i.estilo}"` : ''}>`;
@@ -1853,7 +1859,7 @@ if (!cod) { cpMsg('Escribe el código.', false); return; }
 const c = cupones.find(x => x.codigo === cod);
 if (!c) { cpMsg('Ese código no existe.', false); return; }
 if (!vigente(c)) { cpMsg('Ese cupón ya venció.', false); return; }
-cupon = c; $('#cpInput').value = c.codigo; store.set('crv_cupon', c.codigo);
+cupon = c; $('#cpInput').value = c.codigo; sesion.set('crv_cupon', c.codigo);
 cpMsg(c.pct + '% de descuento aplicado. No aplica a promociones.', true);
 refrescar(); tick();
 if (!silencioso) toast('Cupón ' + c.codigo + ' aplicado');
@@ -1903,7 +1909,7 @@ $('#cartPill').hidden = n === 0;
 document.body.classList.toggle('has-pill', n > 0);
 $('#pillN').textContent = n; $('#pillT').textContent = fmt(total());
 $('#navCnt').textContent = n; $('#navTot').hidden = n === 0; $('#navTot').textContent = fmt(total());
-store.set('crv_carrito', lineas());
+sesion.set('crv_carrito', lineas());
 if (location.hash === '#carrito') $('#cartPill').hidden = true;
 $$('[data-q-badge]').forEach(b => { const k = lineas().filter(l => l.id === b.dataset.qBadge).reduce((a, l) => a + l.qty, 0); b.hidden = !k; b.textContent = k + ' en el carrito'; });
 pintarCarrito();
@@ -1947,7 +1953,7 @@ $('#contraTxt').innerHTML = t ? 'Pagar en la tienda<small>Efectivo o transferenc
 }
 $$('input[name="servicio"]').forEach(r => r.addEventListener('change', () => { $('#err').textContent = ''; pintarCarrito(); }));
 $('#cartSide').addEventListener('focusin', e => { if (e.target.matches('#fName,#fTel,#fAddr,#fBarrio')) $$('.steps li').forEach((li, k) => li.classList.toggle('on', k <= 1)); });
-$('#cartClear').addEventListener('click', () => { cart.clear(); cupon = null; store.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = ''; refrescar(); });
+$('#cartClear').addEventListener('click', () => { cart.clear(); cupon = null; sesion.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = ''; refrescar(); });
 const cartDlg = { close() {}, showModal() {} };
 function abrirCarrito() { $('#err').textContent = ''; pintarCarrito(); if (location.hash !== '#carrito') location.hash = 'carrito'; else window.scrollTo(0, 0); }
 $('#cartPill').addEventListener('click', abrirCarrito);
@@ -2014,7 +2020,7 @@ $('#payBody').innerHTML = `
 <p>Pago de ${fmt(total())} aprobado. Pedido <b>${ref}</b>.</p>
 <p class="note">La cocina ya lo tiene. Te escribimos por WhatsApp al ${esc(d.tel)} ${d.tienda ? 'cuando esté listo para recoger en la tienda' : 'cuando salga el domiciliario'}.</p>
 <div class="row2"><button type="button" class="solid" id="payDone">Listo</button></div>`;
-cart.clear(); cupon = null; store.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = '';
+cart.clear(); cupon = null; sesion.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = '';
 refrescar(); tick();
 $('#payDone').addEventListener('click', () => { payDlg.close(); cartDlg.close(); location.hash = 'inicio'; });
 });
@@ -2053,9 +2059,9 @@ el.innerHTML = '✓ ' + esc(nombre) + ' se agregó al carrito <a href="#carrito"
 el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600);
 const c = $('#navCart'); c.animate([{ transform:'scale(1)' }, { transform:'scale(1.12)' }, { transform:'scale(1)' }], { duration:350 });
 }
-(store.get('crv_carrito', []) || []).forEach(l => { if (ITEMS[l.id] && l.qty > 0) cart.set(l.key, l); });
+(sesion.get('crv_carrito', []) || []).forEach(l => { if (ITEMS[l.id] && l.qty > 0) cart.set(l.key, l); });
 cuponBienvenida();
-{ const g = store.get('crv_cupon', ''); if (g && cart.size) aplicar(g, true); }
+{ const g = sesion.get('crv_cupon', ''); if (g && cart.size) aplicar(g, true); }
 ruta(); pintarEstado(); refrescar(); tick();
 setInterval(tick, 1000);
 setInterval(pintarEstado, 60000);
