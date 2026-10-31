@@ -179,3 +179,24 @@ html{scroll-padding-top:100px}
 .hero-stats div b{font-size:24px}
 .hero-stats div span{font-size:12.5px}
 }
+/* Video de la picada en "Comida rápida de barrio": de fondo, como el de la portada */
+.about-video{position:absolute;top:0;bottom:0;left:0;width:100%;height:100%;object-fit:cover;background:var(--carbon);pointer-events:none}
+.about.con-video{position:relative;overflow:hidden}
+.about.con-video .container{position:relative;z-index:1}
+.about.con-video .about-img{display:none}
+.about.con-video .about-grid{grid-template-columns:1fr}
+.about.con-video .about-grid>div:first-child{max-width:560px}
+.about.con-video::after{content:"";position:absolute;inset:0;pointer-events:none}
+.about:not(.con-video) .about-video{display:none}
+@media (min-width:901px){
+.about.con-video{padding-top:110px;padding-bottom:110px}
+.about-video{left:34%;width:66%;object-position:50% 25%}
+.about.con-video::after{background:linear-gradient(90deg,rgba(43,18,18,1) 0%,rgba(43,18,18,.97) 34%,rgba(89,42,42,.45) 47%,rgba(89,42,42,.08) 66%,rgba(43,18,18,0) 100%)}
+}
+@media (max-width:900px){
+.about.con-video{padding-top:0}
+.about-video{bottom:auto;height:62vw;object-position:50% 50%}
+.about.con-video .container{padding-top:calc(62vw - 40px)}
+.about.con-video::after{background:linear-gradient(180deg,rgba(43,18,18,0) 0,rgba(43,18,18,0) calc(62vw - 140px),rgba(89,42,42,.5) calc(62vw - 70px),var(--carbon) calc(62vw + 2px),var(--carbon) 100%)}
+.about.con-video h2{text-shadow:0 2px 14px rgba(43,18,18,.75)}
+}

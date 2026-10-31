@@ -15,3 +15,19 @@
   });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && v.paused) play(); });
 })();
+(function () {
+  var sec = document.querySelector('.about');
+  var v = document.getElementById('aboutVideo');
+  if (!sec || !v) return;
+  v.muted = true; v.defaultMuted = true; v.controls = false;
+  function play() { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+  var srcs = v.querySelectorAll('source');
+  // Si el video no carga, vuelve la foto de la picada
+  if (srcs.length) srcs[srcs.length - 1].addEventListener('error', function () { sec.classList.remove('con-video'); });
+  play();
+  v.addEventListener('canplay', play);
+  ['touchstart', 'touchend', 'scroll', 'click', 'pointerdown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { if (v.paused) play(); }, { passive: true });
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && v.paused) play(); });
+})();
