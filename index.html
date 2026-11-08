@@ -639,6 +639,7 @@ dialog.small{width:min(92vw,440px);border-radius:20px;padding:24px}
 </div>
 <h3 id="datosTit">Datos de entrega</h3>
 <label class="f" style="margin-top:10px">Nombre<input id="fName" type="text" autocomplete="name"></label>
+<input type="text" id="fHp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
 <label class="f">Celular<input id="fTel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="300 123 4567"></label>
 <div id="entregaCampos">
 <label class="f">Dirección<input id="fAddr" type="text" autocomplete="street-address" placeholder="Ej: Cra 80 # 30-15, apto 201"></label>
@@ -675,7 +676,7 @@ dialog.small{width:min(92vw,440px);border-radius:20px;padding:24px}
 <div><h4>Horario</h4><ul><li>Lunes a domingo</li><li>4:30 pm a 11:45 pm</li><li>Promociones de 4:30 a 7:30 pm</li></ul></div>
 <div><h4>Contacto</h4><ul><li>Cra. 81 # 32 312 a 32 20</li><li>Belén, Medellín</li><li><a id="waFoot" href="#" target="_blank" rel="noopener">WhatsApp 301 574 5474</a></li></ul></div>
 </div>
-<div class="foot-bottom"><div class="container"><span>© 2026 Comidas Rápidas Juan. Todos los derechos reservados.</span><button type="button" id="openAdmin">Panel del negocio</button></div></div>
+<div class="foot-bottom"><div class="container"><span>© 2026 Comidas Rápidas Juan. Todos los derechos reservados.</span><span style="display:flex;gap:16px;flex-wrap:wrap"><a href="/admin/" style="text-decoration:underline">Pedidos</a><button type="button" id="openAdmin">Cupones</button></span></div></div>
 </footer>
 <button class="cartpill" id="cartPill" type="button" hidden><span class="add-cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17.5" cy="19.5" r="1.6"/><path d="M2.5 3.5h2.4l2.3 11a1.6 1.6 0 0 0 1.6 1.3h8.5a1.6 1.6 0 0 0 1.5-1.2L21 7.5H5.7"/></svg><span class="n" id="pillN">0</span>Ver carrito</span><span id="pillT">$ 0</span></button>
 <a class="wa-float" id="waFloat" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
@@ -1993,18 +1994,48 @@ return [
 ].join('\n');
 }
 const payDlg = $('#payDlg');
+/* Guarda el pedido en el panel del negocio (si falla, el WhatsApp sigue funcionando) */
+function guardarPedido(d, pago, ref) {
+const body = {
+name: d.nombre, phone: d.tel, servicio: d.tienda ? 'tienda' : 'domicilio', addr: d.dir, barrio: d.barrio, pago: pago, ref: ref,
+items: lineas().map(l => ({ id: l.id, qty: l.qty, op: l.op, nota: l.nota })),
+cupon: vigente(cupon) ? cupon.codigo : '', pct: vigente(cupon) ? cupon.pct : 0, origen: SRC, hp: ($('#fHp') || {}).value || ''
+};
+return fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify(body) })
+.then(r => r.json()).catch(() => null);
+}
+const OK_ICO = '<div class="okbig"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
+function vaciarTodo() { cart.clear(); cupon = null; sesion.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = ''; refrescar(); tick(); }
 $('#checkout').addEventListener('click', () => {
 const d = datos();
 if (!d) return;
 const online = ($('input[name="pago"]:checked') || {}).value === 'online';
+const ref = 'CRV-' + Math.floor(10000 + Math.random() * 90000);
 if (!online) {
+const pagoTxt = d.tienda ? 'En la tienda' : 'Al recibir';
+const url = waBase + encodeURIComponent(textoPedido(d, pagoTxt, ref));
+const saved = guardarPedido(d, 'contra', ref);
 const a = document.createElement('a');
-a.href = waBase + encodeURIComponent(textoPedido(d, d.tienda ? 'En la tienda' : 'Al recibir')); a.target = '_blank'; a.rel = 'noopener';
+a.href = url; a.target = '_blank'; a.rel = 'noopener';
 document.body.appendChild(a); a.click(); a.remove();
+$$('.steps li').forEach((li, k) => li.classList.toggle('on', k <= 2));
+$('#payBody').innerHTML = `
+${OK_ICO}
+<h2 class="h-display" id="payTitle">Enviando tu pedido…</h2>
+<p id="saveMsg" class="note">Un momento, lo estamos registrando.</p>
+<p class="note">Envía el mensaje que se abrió en WhatsApp para confirmar. Si no se abrió, <a href="${url}" target="_blank" rel="noopener"><b>toca aquí para abrir WhatsApp</b></a>.</p>
+<div class="row2"><button type="button" class="solid" id="payDone">Listo</button></div>`;
+saved.then(j => {
+const t = $('#payTitle'), m = $('#saveMsg'); if (!t || !m) return;
+if (j && j.ok) { t.textContent = '¡Pedido recibido!'; m.innerHTML = 'Tu pedido es el <b>#' + esc(j.number || '') + '</b> · Ref ' + ref + '. ' + (d.tienda ? 'Te avisamos por WhatsApp cuando esté listo para recoger en la tienda.' : 'La cocina ya lo tiene.'); }
+else if (j && j.error === 'db_not_configured') { t.textContent = '¡Pedido listo!'; m.textContent = 'Envía el mensaje de WhatsApp para confirmar tu pedido.'; }
+else { t.textContent = 'Envía el WhatsApp'; m.innerHTML = '⚠️ No se pudo guardar el pedido en el panel. <b>Envía el mensaje de WhatsApp</b> para que nos llegue.'; m.style.color = '#8A4B00'; }
+});
+$('#payDone').addEventListener('click', () => { vaciarTodo(); payDlg.close(); location.hash = 'inicio'; });
+payDlg.showModal();
 return;
 }
 $$('.steps li').forEach((li, k) => li.classList.toggle('on', k <= 2));
-const ref = 'CRV-' + Math.floor(10000 + Math.random() * 90000);
 $('#payBody').innerHTML = `
 <h2 class="h-display">Pago seguro</h2>
 <p class="note">Pedido ${ref} · ${esc(NEGOCIO)}</p>
@@ -2014,14 +2045,15 @@ $('#payBody').innerHTML = `
 <p class="warn">Demo: aquí se abre la pasarela de pagos del negocio (Wompi, ePayco o Mercado Pago). No se hace ningún cobro.</p>
 <div class="row2"><button type="button" data-close>Volver</button><button type="button" class="solid" id="payOk">Simular pago</button></div>`;
 $('#payOk').addEventListener('click', () => {
+const pagado = total();
+guardarPedido(d, 'online', ref).then(j => { const n = $('#orderNum'); if (n && j && j.ok && j.number) n.textContent = '#' + j.number + ' · '; });
 $('#payBody').innerHTML = `
-<div class="okbig"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+${OK_ICO}
 <h2 class="h-display">¡Pedido recibido!</h2>
-<p>Pago de ${fmt(total())} aprobado. Pedido <b>${ref}</b>.</p>
+<p>Pago de ${fmt(pagado)} aprobado. Pedido <b><span id="orderNum"></span>${ref}</b>.</p>
 <p class="note">La cocina ya lo tiene. Te escribimos por WhatsApp al ${esc(d.tel)} ${d.tienda ? 'cuando esté listo para recoger en la tienda' : 'cuando salga el domiciliario'}.</p>
 <div class="row2"><button type="button" class="solid" id="payDone">Listo</button></div>`;
-cart.clear(); cupon = null; sesion.set('crv_cupon', ''); $('#cpInput').value = ''; $('#cpMsg').textContent = '';
-refrescar(); tick();
+setTimeout(vaciarTodo, 0);
 $('#payDone').addEventListener('click', () => { payDlg.close(); cartDlg.close(); location.hash = 'inicio'; });
 });
 payDlg.showModal();

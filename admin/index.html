@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#2B1212">
+<link rel="icon" type="image/webp" href="/favicon.webp">
+<title>Panel de pedidos · Comidas Rápidas Juan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,700..800&family=Caveat+Brush&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --vino: #592A2A; --carbon: #2B1212; --carbon2: #3E1C1C; --mostaza: #D9A404; --salsa: #D53000; --caramelo: #A64F03; --arena: #D0B892;
+  --cream: #FBF6EC; --line: #E8DAC2; --muted: #6F5A4C; --green: #1C9E50; --blue: #2468C9; --orange: #D97A12; --bg: #F6EFE3; --card: #fff;
+  --display: 'Bricolage Grotesque', system-ui, sans-serif; --body: 'Plus Jakarta Sans', system-ui, sans-serif; --script: 'Caveat Brush', cursive;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--carbon); font: 400 16px/1.45 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; margin: 0; letter-spacing: -.01em; font-variation-settings: "wdth" 85; }
+[hidden] { display: none !important; }
+
+/* ---------- acceso ---------- */
+#login { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(900px 500px at 80% 10%, #6B3030, var(--vino) 45%, var(--carbon)); }
+.lbox { width: min(420px, 100%); background: var(--cream); border-radius: 26px; padding: 30px 26px; box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+.lbox img { width: 84px; height: 84px; object-fit: contain; display: block; margin-bottom: 8px; }
+.lbox h1 { font-size: 2rem; line-height: 1.05; }
+.lbox h1 span { display: block; font: 400 1.6rem var(--script); color: var(--caramelo); }
+.lbox p { color: var(--muted); margin: 8px 0 18px; }
+.lbox input[type=password] { width: 100%; padding: 14px 16px; border: 2px solid var(--line); border-radius: 14px; font-size: 1.15rem; letter-spacing: .12em; background: #fff; }
+.lbox input:focus { outline: 3px solid var(--mostaza); border-color: var(--vino); }
+.lbox label.rem { display: flex; gap: 8px; align-items: center; margin: 12px 0 16px; color: var(--muted); font-size: .92rem; }
+.btn { border: 0; border-radius: 999px; padding: 11px 20px; font-weight: 800; background: var(--mostaza); color: var(--carbon); min-height: 44px; }
+.btn:hover { filter: brightness(.96); }
+.btn.wide { width: 100%; font-size: 1.05rem; }
+.btn.ghost { background: transparent; border: 1.5px solid var(--line); color: var(--carbon); }
+.btn.dark { background: var(--carbon); color: #fff; }
+.btn.sm { min-height: 36px; padding: 6px 14px; font-size: .9rem; }
+.btn:disabled { opacity: .5; cursor: default; }
+.err { color: var(--salsa); font-weight: 700; margin: 12px 0 0; min-height: 1.2em; }
+.setup { background: #fff; border: 2px dashed var(--orange); border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: .92rem; }
+
+/* ---------- barra superior ---------- */
+header.top { position: sticky; top: 0; z-index: 10; background: var(--carbon); color: #fff; display: flex; align-items: center; gap: 12px; padding: 10px clamp(12px, 3vw, 28px); flex-wrap: wrap; box-shadow: 0 1px 0 rgba(217,164,4,.3); }
+header.top img { width: 46px; height: 46px; object-fit: contain; }
+header.top h1 { font-size: 1.35rem; flex: 1; min-width: 180px; }
+header.top h1 small { display: block; font: 500 .74rem var(--body); opacity: .75; letter-spacing: 0; }
+.live { display: inline-flex; align-items: center; gap: 7px; font-size: .86rem; opacity: .95; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #5BE08A; box-shadow: 0 0 0 0 rgba(91,224,138,.6); animation: pulse 2s infinite; }
+.dot.off { background: #FF7A5A; animation: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(91,224,138,0); } 100% { box-shadow: 0 0 0 0 rgba(91,224,138,0); } }
+header.top .btn { background: rgba(255,255,255,.12); color: #fff; min-height: 38px; padding: 6px 14px; font-size: .88rem; }
+header.top .btn:hover { background: rgba(255,255,255,.22); }
+header.top .btn.on { background: var(--mostaza); color: var(--carbon); }
+header.top .btn.xls { background: var(--green); }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 5px; background: linear-gradient(90deg, var(--arena) 0 20%, var(--mostaza) 20% 40%, var(--caramelo) 40% 60%, var(--salsa) 60% 80%, var(--vino) 80% 100%); }
+
+main { padding: 20px clamp(12px, 3vw, 28px) 60px; max-width: 1500px; margin: 0 auto; }
+#alertbar { background: var(--mostaza); color: var(--carbon); font-weight: 800; border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; animation: blink 1s 3; }
+@keyframes blink { 50% { background: #FFE99A; } }
+
+/* ---------- resumen ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.stat { background: var(--card); border-radius: 16px; padding: 12px 16px; border: 1px solid var(--line); }
+.stat b { display: block; font: 800 1.7rem/1.1 var(--display); }
+.stat span { color: var(--muted); font-size: .84rem; }
+.prep { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; margin-bottom: 14px; }
+.prep h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { background: var(--cream); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .92rem; }
+.chip b { font-family: var(--display); font-size: 1.05rem; margin-right: 4px; color: var(--salsa); }
+.empty { color: var(--muted); }
+
+/* ---------- filtros ---------- */
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: .92rem; }
+.tab.on { background: var(--vino); color: #fff; border-color: var(--vino); }
+.tab i { font-style: normal; opacity: .7; margin-left: 4px; }
+.bar input[type=search] { flex: 1; min-width: 160px; padding: 9px 14px; border: 1.5px solid var(--line); border-radius: 999px; background: #fff; }
+.bar select { padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 999px; background: #fff; }
+
+/* ---------- pedidos ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; align-items: start; }
+.order { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px 16px; border-top: 6px solid var(--blue); display: grid; gap: 10px; }
+.order.s-nuevo { border-top-color: var(--salsa); box-shadow: 0 8px 24px rgba(213,48,0,.16); }
+.order.s-preparando { border-top-color: var(--orange); }
+.order.s-listo { border-top-color: var(--blue); }
+.order.s-entregado { border-top-color: var(--green); opacity: .85; }
+.order.s-cancelado { border-top-color: #999; opacity: .6; }
+.oh { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.oh h2 { font-size: 1.55rem; }
+.oh small { color: var(--muted); display: block; font-size: .82rem; }
+.pill { display: inline-block; border-radius: 999px; padding: 3px 11px; font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #fff; background: var(--blue); }
+.pill.s-nuevo { background: var(--salsa); } .pill.s-preparando { background: var(--orange); } .pill.s-entregado { background: var(--green); } .pill.s-cancelado { background: #999; }
+.tag { display: inline-block; font-size: .72rem; font-weight: 800; border-radius: 6px; padding: 1px 7px; background: var(--cream); border: 1px solid var(--line); color: var(--muted); margin-left: 4px; }
+.svc { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: .9rem; border-radius: 10px; padding: 4px 10px; background: #FBE0D5; color: #8A2400; }
+.svc.tienda { background: #E3F3E9; color: #12693A; }
+.who { font-weight: 800; font-size: 1.08rem; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+a { color: var(--blue); }
+ul.items { list-style: none; margin: 0; padding: 8px 12px; background: var(--cream); border-radius: 12px; display: grid; gap: 5px; }
+ul.items li b { font-family: var(--display); font-size: 1.1rem; margin-right: 6px; color: var(--salsa); }
+ul.items li small { display: block; color: var(--muted); padding-left: 26px; font-size: .84rem; }
+ul.items li .pr { float: right; color: var(--muted); font-size: .88rem; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: .94rem; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-weight: 500; word-break: break-word; }
+.total { display: flex; justify-content: space-between; align-items: center; font-family: var(--display); font-size: 1.5rem; font-weight: 800; }
+.paid { display: inline-flex; align-items: center; gap: 6px; font: 700 .9rem var(--body); }
+.paid input { width: 18px; height: 18px; accent-color: var(--green); }
+.note { width: 100%; padding: 8px 12px; border: 1.5px dashed var(--line); border-radius: 10px; font-size: .9rem; background: #fff; }
+.acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.acts .btn.main { flex: 1; min-width: 150px; }
+.btn.go { background: var(--green); color: #fff; }
+.btn.warn { background: #fff; color: var(--salsa); border: 1.5px solid #F0C9BB; }
+
+#toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--carbon); color: #fff; padding: 10px 18px; border-radius: 999px; z-index: 50; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+
+/* ---------- ticket de impresión ---------- */
+#ticket { display: none; }
+@media print {
+  body > *:not(#ticket) { display: none !important; }
+  #ticket { display: block; width: 72mm; margin: 0; font: 13px/1.35 'Courier New', monospace; color: #000; }
+  #ticket h1 { font: 800 17px 'Courier New', monospace; text-align: center; margin: 0 0 4px; }
+  #ticket hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  #ticket .t { display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; }
+  #ticket .big { font-weight: 800; font-size: 15px; text-align: center; }
+  @page { margin: 4mm; }
+}
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } header.top h1 { font-size: 1.15rem; } }
+</style>
+</head>
+<body>
+
+<!-- ACCESO -->
+<section id="login" hidden>
+  <form class="lbox" id="loginForm" autocomplete="off">
+    <img src="/logo.webp" alt="Comidas Rápidas Juan">
+    <h1>Panel de pedidos <span>Comidas Rápidas Juan</span></h1>
+    <p>Solo para el equipo del restaurante.<br>Escribe la clave de acceso.</p>
+    <input type="password" id="pin" placeholder="Clave" autocomplete="current-password" aria-label="Clave de acceso" required>
+    <label class="rem"><input type="checkbox" id="remember"> Recordar en este equipo</label>
+    <button class="btn wide" type="submit">Entrar</button>
+    <p class="err" id="lerr" role="alert"></p>
+    <div class="setup" id="setupBox" hidden></div>
+  </form>
+</section>
+
+<!-- PANEL -->
+<div id="app" hidden>
+  <header class="top">
+    <img src="/logo.webp" alt="">
+    <h1>Comidas Rápidas Juan <small>Panel de pedidos · hora de Medellín</small></h1>
+    <span class="live"><span class="dot" id="dot"></span><span id="liveTxt">Conectando…</span></span>
+    <button class="btn" id="btnSound" type="button" title="Sonido cuando llega un pedido">🔔 Sonido: sí</button>
+    <button class="btn" id="btnNotif" type="button" hidden>Avisos del navegador</button>
+    <button class="btn xls" id="btnXls" type="button">⬇ Descargar Excel</button>
+    <button class="btn" id="btnOut" type="button">Salir</button>
+  </header>
+  <main>
+    <div id="alertbar" hidden><span id="alertTxt"></span><button class="btn sm dark" id="alertOk" type="button">Ver</button></div>
+    <div class="stats" id="stats"></div>
+    <div class="prep" id="prep"></div>
+    <div class="bar">
+      <div class="tabs" id="tabs"></div>
+      <select id="range" aria-label="Periodo">
+        <option value="today">Hoy</option><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="all">Todos</option>
+      </select>
+      <input type="search" id="q" placeholder="Buscar nombre, celular, barrio, #pedido…" aria-label="Buscar">
+    </div>
+    <div class="grid" id="list"></div>
+  </main>
+</div>
+<div id="ticket"></div>
+<div id="toast" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var STATUS_TXT = { nuevo: 'Nuevo', preparando: 'Preparando', listo: 'Listo', entregado: 'Entregado', cancelado: 'Cancelado' };
+  var TZ = 'America/Bogota';
+  var KEY = 'crjpin';
+  var $ = function (s) { return document.querySelector(s); };
+  var pin = '', orders = [], ver = '', first = true, seen = {}, tab = 'activos', timer = null, sound = true, unread = 0, baseTitle = document.title;
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { return '$ ' + String(Math.round(Number(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function dayKey(ts) { return new Date(ts).toLocaleDateString('en-CA', { timeZone: TZ }); }
+  function fmtTime(ts) { return new Date(ts).toLocaleString('es-CO', { timeZone: TZ, day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); }
+  function ago(ts) {
+    var m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    if (m < 1) return 'ahora mismo'; if (m < 60) return 'hace ' + m + ' min';
+    var h = Math.floor(m / 60); if (h < 24) return 'hace ' + h + ' h';
+    return 'hace ' + Math.floor(h / 24) + ' d';
+  }
+  function wa(phone) { var d = String(phone).replace(/\D/g, ''); return d.length === 10 ? '57' + d : d; }
+  function prettyPhone(p) { var d = String(p).replace(/\D/g, ''); return d.length === 10 ? d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6) : p; }
+  function itemName(i) { return i.name + (i.promo ? ' (promo)' : '') + (i.op ? ' · ' + i.op : ''); }
+  function toast(t) { var el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 2600); }
+  function store() { try { return $('#remember').checked ? localStorage : sessionStorage; } catch (e) { return null; } }
+
+  /* ---------- red ---------- */
+  function api(method, path, body) {
+    return fetch('/api/orders' + (path || ''), {
+      method: method, cache: 'no-store',
+      headers: { 'x-admin-pin': pin, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._status = r.status; return j; }); });
+  }
+  function showLogin(msg, setup) {
+    clearInterval(timer); timer = null;
+    $('#app').hidden = true; $('#login').hidden = false;
+    $('#lerr').textContent = msg || '';
+    var sb = $('#setupBox');
+    sb.hidden = !setup; sb.innerHTML = setup || '';
+    setTimeout(function () { $('#pin').focus(); }, 50);
+  }
+  function showApp() {
+    $('#login').hidden = true; $('#app').hidden = false;
+    if (!timer) timer = setInterval(poll, 7000);
+  }
+  function poll(force) {
+    return api('GET', force ? '' : '?since=' + encodeURIComponent(ver)).then(function (j) {
+      if (j._status === 401) { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch (e) {} pin = ''; showLogin('Clave incorrecta.'); return; }
+      if (j._status === 429) { showLogin('Demasiados intentos. Espera 15 minutos.'); return; }
+      if (j._status === 503) {
+        showLogin('', j.error === 'pin_not_set' ? '<b>Falta la clave del panel.</b> Hay que crear la variable ADMIN_PIN en Vercel.' : '<b>Falta conectar la base de datos de pedidos.</b> Hay que conectar Upstash Redis a este proyecto en Vercel.');
+        return;
+      }
+      if (j._status !== 200) { setLive(false); return; }
+      setLive(true); showApp();
+      if (j.same) return;
+      ver = j.ver; orders = j.orders || [];
+      var fresh = [];
+      orders.forEach(function (o) { if (!seen[o.id]) { seen[o.id] = 1; if (!first && o.status === 'nuevo') fresh.push(o); } });
+      first = false;
+      if (fresh.length) newAlert(fresh);
+      render();
+    }).catch(function () { setLive(false); });
+  }
+  function setLive(ok) {
+    $('#dot').classList.toggle('off', !ok);
+    $('#liveTxt').textContent = ok ? 'En vivo' : 'Sin conexión… reintentando';
+  }
+
+  /* ---------- avisos ---------- */
+  var actx = null;
+  function beep() {
+    if (!sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      [0, .28, .56].forEach(function (d, i) {
+        var o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.value = i === 2 ? 1180 : 880;
+        g.gain.setValueAtTime(.0001, actx.currentTime + d);
+        g.gain.exponentialRampToValueAtTime(.4, actx.currentTime + d + .03);
+        g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + d + .24);
+        o.connect(g); g.connect(actx.destination); o.start(actx.currentTime + d); o.stop(actx.currentTime + d + .26);
+      });
+    } catch (e) {}
+  }
+  function newAlert(list) {
+    beep();
+    unread += list.length;
+    document.title = '(' + unread + ') ¡Pedido nuevo! · Comidas Rápidas Juan';
+    var t = list.length === 1 ? '¡Pedido nuevo #' + list[0].number + ' de ' + list[0].name + ' · ' + money(list[0].total) + ' · ' + (list[0].servicio === 'tienda' ? 'Recoge en tienda' : 'Domicilio') + '!' : '¡' + list.length + ' pedidos nuevos!';
+    $('#alertTxt').textContent = t; $('#alertbar').hidden = false;
+    try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Comidas Rápidas Juan', { body: t, icon: '/logo.webp' }); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { unread = 0; document.title = baseTitle; } });
+  $('#alertOk').addEventListener('click', function () { $('#alertbar').hidden = true; unread = 0; document.title = baseTitle; tab = 'activos'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  /* ---------- pintar ---------- */
+  function inRange(o) {
+    var r = $('#range').value;
+    if (r === 'all') return true;
+    if (r === 'today') return dayKey(o.ts) === dayKey(Date.now());
+    return o.ts >= Date.now() - Number(r) * 86400000;
+  }
+  function matches(o) {
+    var q = $('#q').value.trim().toLowerCase();
+    if (!q) return true;
+    return [o.number, o.ref, o.name, o.phone, o.addr, o.barrio].join(' ').toLowerCase().indexOf(q) >= 0;
+  }
+  function tabFilter(o) {
+    if (tab === 'activos') return o.status === 'nuevo' || o.status === 'preparando' || o.status === 'listo';
+    if (tab === 'todos') return true;
+    if (tab === 'domicilio' || tab === 'tienda') return o.servicio === tab && o.status !== 'cancelado';
+    return o.status === tab;
+  }
+  function render() {
+    var scope = orders.filter(inRange);
+    var active = scope.filter(function (o) { return o.status !== 'cancelado'; });
+    var sales = active.reduce(function (s, o) { return s + o.total; }, 0);
+    var unpaid = active.filter(function (o) { return !o.paid; }).reduce(function (s, o) { return s + o.total; }, 0);
+    var units = active.reduce(function (s, o) { return s + (o.units || 0); }, 0);
+    $('#stats').innerHTML =
+      '<div class="stat"><b>' + active.length + '</b><span>Pedidos</span></div>' +
+      '<div class="stat"><b>' + units + '</b><span>Platos y bebidas</span></div>' +
+      '<div class="stat"><b>' + money(sales) + '</b><span>Ventas (sin domicilios)</span></div>' +
+      '<div class="stat"><b>' + money(unpaid) + '</b><span>Por cobrar</span></div>';
+
+    var need = {}, pend = 0;
+    orders.forEach(function (o) {
+      if (o.status === 'nuevo' || o.status === 'preparando') { pend++; (o.items || []).forEach(function (i) { var k = itemName(i); need[k] = (need[k] || 0) + i.qty; }); }
+    });
+    var keys = Object.keys(need).sort(function (a, b) { return need[b] - need[a]; });
+    var chips = keys.map(function (k) { return '<span class="chip"><b>' + need[k] + '</b>' + esc(k) + '</span>'; }).join('');
+    $('#prep').innerHTML = '<h3>En cocina ahora (' + pend + ' pedido' + (pend === 1 ? '' : 's') + ')</h3>' + (chips ? '<div class="chips">' + chips + '</div>' : '<span class="empty">Nada pendiente 🎉</span>');
+
+    var counts = { activos: 0, nuevo: 0, domicilio: 0, tienda: 0, entregado: 0, cancelado: 0, todos: scope.length };
+    scope.forEach(function (o) {
+      if (o.status === 'nuevo' || o.status === 'preparando' || o.status === 'listo') counts.activos++;
+      if (counts[o.status] != null) counts[o.status]++;
+      if (o.status !== 'cancelado') counts[o.servicio === 'tienda' ? 'tienda' : 'domicilio']++;
+    });
+    var T = [['activos', 'Activos'], ['nuevo', 'Nuevos'], ['domicilio', '🛵 Domicilio'], ['tienda', '🏪 En tienda'], ['entregado', 'Entregados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']];
+    $('#tabs').innerHTML = T.map(function (t) { return '<button type="button" class="tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<i>' + counts[t[0]] + '</i></button>'; }).join('');
+
+    var shown = scope.filter(tabFilter).filter(matches);
+    if (tab === 'activos' || tab === 'nuevo') shown.sort(function (a, b) { return a.ts - b.ts; }); else shown.sort(function (a, b) { return b.ts - a.ts; });
+    $('#list').innerHTML = shown.length ? shown.map(card).join('') : '<p class="empty">No hay pedidos aquí todavía.</p>';
+  }
+  function nextAction(o) {
+    if (o.status === 'nuevo') return ['preparando', 'Aceptar y preparar', ''];
+    if (o.status === 'preparando') return ['listo', o.servicio === 'tienda' ? 'Listo para recoger' : 'Listo para enviar', ''];
+    if (o.status === 'listo') return ['entregado', o.servicio === 'tienda' ? 'Marcar recogido' : 'Marcar entregado', 'go'];
+    return null;
+  }
+  function card(o) {
+    var items = (o.items || []).map(function (i) {
+      return '<li><span class="pr">' + money(i.qty * i.price) + '</span><b>' + i.qty + '×</b>' + esc(i.name) + (i.promo ? ' <span class="tag">PROMO</span>' : '') +
+        (i.op ? '<small>Opción: ' + esc(i.op) + '</small>' : '') + (i.note ? '<small>“' + esc(i.note) + '”</small>' : '') + '</li>';
+    }).join('');
+    var d = wa(o.phone), tienda = o.servicio === 'tienda';
+    var msgTxt = tienda
+      ? 'Hola ' + o.name + ', recibimos tu pedido #' + o.number + ' en Comidas Rápidas Juan (' + money(o.total) + '). Te avisamos cuando esté listo para recoger en la tienda. ¡Gracias!'
+      : 'Hola ' + o.name + ', recibimos tu pedido #' + o.number + ' en Comidas Rápidas Juan (' + money(o.total) + ' + domicilio). Ya lo estamos preparando. ¡Gracias!';
+    var na = nextAction(o);
+    var addr = !tienda ? '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(o.addr + (o.barrio ? ', ' + o.barrio : '') + ', Medellín') + '" target="_blank" rel="noopener">' + esc(o.addr) + '</a>' + (o.barrio ? ' · ' + esc(o.barrio) : '') : '';
+    return '<article class="order s-' + esc(o.status) + '" data-id="' + esc(o.id) + '">' +
+      '<div class="oh"><div><h2>#' + esc(o.number) + '</h2><small>' + esc(fmtTime(o.ts)) + ' · ' + esc(ago(o.ts)) + '</small></div>' +
+      '<div style="text-align:right"><span class="pill s-' + esc(o.status) + '">' + esc(STATUS_TXT[o.status] || o.status) + '</span>' + (o.origen ? '<span class="tag">' + esc(o.origen.toUpperCase()) + '</span>' : '') + '</div></div>' +
+      '<div><span class="svc ' + (tienda ? 'tienda' : '') + '">' + (tienda ? '🏪 Recoge en tienda' : '🛵 Domicilio') + '</span></div>' +
+      '<div class="who">' + esc(o.name) + '<div class="row" style="margin-top:4px;font-weight:500"><a href="tel:+' + esc(d) + '">' + esc(prettyPhone(o.phone)) + '</a>' +
+      '<a class="btn sm ghost" href="https://wa.me/' + esc(d) + '?text=' + encodeURIComponent(msgTxt) + '" target="_blank" rel="noopener">WhatsApp</a></div></div>' +
+      '<ul class="items">' + items + '</ul>' +
+      '<dl class="kv">' + (tienda ? '' : '<dt>Dirección</dt><dd>' + addr + '</dd>') +
+      '<dt>Pago</dt><dd>' + (o.pago === 'online' ? 'En línea (tarjeta, PSE o Nequi)' : (tienda ? 'En la tienda' : 'Al recibir')) + '</dd>' +
+      (o.discount ? '<dt>Subtotal</dt><dd>' + money(o.subtotal) + '</dd><dt>Cupón</dt><dd>' + esc(o.cupon) + ' · ' + o.pct + '% (- ' + money(o.discount) + ')</dd>' : '') +
+      (tienda ? '' : '<dt>Domicilio</dt><dd>Se cobra aparte según el barrio</dd>') +
+      (o.ref ? '<dt>Ref.</dt><dd>' + esc(o.ref) + '</dd>' : '') + '</dl>' +
+      '<div class="total"><span>' + money(o.total) + '</span><label class="paid"><input type="checkbox" data-paid="' + esc(o.id) + '"' + (o.paid ? ' checked' : '') + '> Cobrado</label></div>' +
+      '<input class="note" type="text" maxlength="300" placeholder="Nota interna…" value="' + esc(o.adminNote) + '" data-note="' + esc(o.id) + '">' +
+      '<div class="acts">' +
+      (na ? '<button type="button" class="btn main ' + na[2] + '" data-set="' + na[0] + '" data-id="' + esc(o.id) + '">' + na[1] + '</button>' : '') +
+      '<button type="button" class="btn sm ghost" data-print="' + esc(o.id) + '">Imprimir</button>' +
+      (o.status === 'cancelado' || o.status === 'entregado' ? '<button type="button" class="btn sm ghost" data-set="nuevo" data-id="' + esc(o.id) + '">Reabrir</button>' : '<button type="button" class="btn sm warn" data-set="cancelado" data-id="' + esc(o.id) + '">Cancelar</button>') +
+      (o.status === 'cancelado' ? '<button type="button" class="btn sm warn" data-del="' + esc(o.id) + '">Borrar</button>' : '') +
+      '</div></article>';
+  }
+
+  /* ---------- acciones ---------- */
+  function byId(id) { for (var i = 0; i < orders.length; i++) if (orders[i].id === id) return orders[i]; }
+  function patch(id, body) {
+    body.id = id;
+    return api('PATCH', '', body).then(function (j) {
+      if (j.ok) { var o = byId(id); if (o) for (var k in j.order) o[k] = j.order[k]; render(); poll(true); } else toast('No se pudo guardar. Intenta otra vez.');
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tab) { tab = b.dataset.tab; render(); return; }
+    if (b.dataset.set) { patch(b.dataset.id, { status: b.dataset.set }); return; }
+    if (b.dataset.print) { printTicket(byId(b.dataset.print)); return; }
+    if (b.dataset.del) {
+      if (b.dataset.armed) { api('DELETE', '?id=' + encodeURIComponent(b.dataset.del)).then(function () { poll(true); toast('Pedido borrado'); }); return; }
+      b.dataset.armed = '1'; b.textContent = '¿Seguro? Toca otra vez'; setTimeout(function () { delete b.dataset.armed; b.textContent = 'Borrar'; }, 3500);
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.paid) patch(t.dataset.paid, { paid: t.checked });
+    if (t.dataset && t.dataset.note) patch(t.dataset.note, { adminNote: t.value });
+  });
+  $('#range').addEventListener('change', render);
+  $('#q').addEventListener('input', render);
+  $('#btnSound').addEventListener('click', function () {
+    sound = !sound; this.textContent = '🔔 Sonido: ' + (sound ? 'sí' : 'no'); this.classList.toggle('on', sound); if (sound) beep();
+  });
+  $('#btnSound').classList.add('on');
+  if ('Notification' in window && Notification.permission === 'default') {
+    $('#btnNotif').hidden = false;
+    $('#btnNotif').addEventListener('click', function () { Notification.requestPermission().then(function () { $('#btnNotif').hidden = true; }); });
+  }
+  $('#btnOut').addEventListener('click', function () { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch (e) {} pin = ''; orders = []; ver = ''; first = true; seen = {}; showLogin(''); });
+
+  /* ---------- imprimir (comanda para cocina) ---------- */
+  function printTicket(o) {
+    if (!o) return;
+    var tienda = o.servicio === 'tienda';
+    var items = (o.items || []).map(function (i) { return '<div>' + i.qty + ' x ' + esc(i.name) + (i.op ? ' (' + esc(i.op) + ')' : '') + '</div>' + (i.note ? '<div>  * ' + esc(i.note) + '</div>' : ''); }).join('');
+    $('#ticket').innerHTML = '<h1>COMIDAS RÁPIDAS JUAN</h1><div class="big">Pedido #' + esc(o.number) + '</div><div style="text-align:center">' + esc(fmtTime(o.ts)) + '</div><hr>' +
+      '<div class="big">' + (tienda ? 'RECOGE EN TIENDA' : 'DOMICILIO') + '</div><hr>' +
+      '<div><b>' + esc(o.name) + '</b></div><div>' + esc(prettyPhone(o.phone)) + '</div>' +
+      (tienda ? '' : '<div>' + esc(o.addr) + (o.barrio ? ', ' + esc(o.barrio) : '') + '</div>') + '<hr>' + items + '<hr>' +
+      (o.discount ? '<div>Cupón ' + esc(o.cupon) + ': - ' + money(o.discount) + '</div>' : '') +
+      '<div class="t"><span>TOTAL</span><span>' + money(o.total) + '</span></div>' + (tienda ? '' : '<div>+ domicilio según barrio</div>') +
+      '<div>Pago: ' + (o.pago === 'online' ? 'en línea' : (tienda ? 'en la tienda' : 'al recibir')) + (o.paid ? ' (cobrado)' : ' (por cobrar)') + '</div>' + (o.adminNote ? '<hr><div>' + esc(o.adminNote) + '</div>' : '');
+    window.print();
+  }
+
+  /* ---------- Excel (.xlsx real, se abre directo en Excel, Google Sheets o Numbers) ---------- */
+  var CRC = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function zip(files) {
+    var enc = new TextEncoder(), parts = [], central = [], off = 0;
+    files.forEach(function (f) {
+      var name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      var h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      var c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+      c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + data.length;
+    });
+    var csize = central.reduce(function (s, a) { return s + a.length; }, 0);
+    var e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+    return new Blob(parts.concat(central, [new Uint8Array(e.buffer)]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  function xesc(s) { return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function colName(i) { var s = ''; i++; while (i) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+  function xlsx(head, rows, widths, money) {
+    var all = [head].concat(rows);
+    var sheet = all.map(function (r, ri) {
+      return '<row r="' + (ri + 1) + '">' + r.map(function (v, ci) {
+        var ref = colName(ci) + (ri + 1);
+        if (ri > 0 && typeof v === 'number') return '<c r="' + ref + '"' + (money.indexOf(ci) >= 0 ? ' s="2"' : '') + '><v>' + v + '</v></c>';
+        return '<c r="' + ref + '" t="inlineStr"' + (ri === 0 ? ' s="1"' : '') + '><is><t xml:space="preserve">' + xesc(v) + '</t></is></c>';
+      }).join('') + '</row>';
+    }).join('');
+    var cols = '<cols>' + widths.map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>';
+    var last = colName(head.length - 1) + all.length;
+    return zip([
+      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+      { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Pedidos" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+      { name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+      { name: 'xl/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;$&quot; #,##0"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF592A2A"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>' },
+      { name: 'xl/worksheets/sheet1.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' + cols + '<sheetData>' + sheet + '</sheetData><autoFilter ref="A1:' + last + '"/></worksheet>' }
+    ]);
+  }
+  $('#btnXls').addEventListener('click', function () {
+    var list = orders.filter(inRange).slice().sort(function (a, b) { return a.ts - b.ts; });
+    if (!list.length) { toast('No hay pedidos en este periodo.'); return; }
+    var head = ['Pedido', 'Fecha', 'Hora', 'Estado', 'Servicio', 'Nombre', 'Celular', 'Dirección', 'Barrio', 'Pago', 'Cobrado', 'Unidades', 'Productos', 'Subtotal', 'Cupón', 'Descuento', 'Total', 'Origen', 'Ref', 'Nota interna'];
+    var rows = list.map(function (o) {
+      var dt = new Date(o.ts);
+      return [o.number, dt.toLocaleDateString('es-CO', { timeZone: TZ }), dt.toLocaleTimeString('es-CO', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }), STATUS_TXT[o.status] || o.status,
+        o.servicio === 'tienda' ? 'Recoge en tienda' : 'Domicilio', o.name, prettyPhone(o.phone), o.addr || '', o.barrio || '',
+        o.pago === 'online' ? 'En línea' : (o.servicio === 'tienda' ? 'En la tienda' : 'Al recibir'), o.paid ? 'Sí' : 'No', o.units || 0,
+        (o.items || []).map(function (i) { return i.qty + ' x ' + itemName(i) + (i.note ? ' (' + i.note + ')' : ''); }).join(' | '),
+        o.subtotal || o.total, o.cupon ? o.cupon + ' ' + o.pct + '%' : '', o.discount || 0, o.total, o.origen || 'Página web', o.ref || '', o.adminNote || ''];
+    });
+    var blob = xlsx(head, rows, [9, 11, 9, 12, 16, 22, 14, 30, 18, 12, 9, 10, 60, 12, 12, 12, 12, 12, 11, 30], [13, 15, 16]);
+    var r = $('#range').value, tag = r === 'today' ? 'hoy' : r === 'all' ? 'todos' : r + '-dias';
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedidos-comidas-rapidas-juan-' + tag + '-' + dayKey(Date.now()) + '.xlsx';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    toast('Excel descargado (' + list.length + ' pedido' + (list.length === 1 ? '' : 's') + ')');
+  });
+
+  /* ---------- entrada ---------- */
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    pin = $('#pin').value.trim(); if (!pin) return;
+    $('#lerr').textContent = 'Revisando…';
+    first = true; seen = {}; ver = '';
+    // desbloquea el audio del navegador con este clic
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (er) {}
+    poll(true).then(function () {
+      if (!$('#app').hidden) {
+        var st = store(); if (st) { try { st.setItem(KEY, pin); } catch (er) {} }
+        $('#pin').value = '';
+      }
+    });
+  });
+  try { pin = localStorage.getItem(KEY) || sessionStorage.getItem(KEY) || ''; } catch (e) {}
+  if (pin) poll(true).then(function () { if ($('#app').hidden && $('#login').hidden) showLogin(''); }); else showLogin('');
+  setInterval(function () { if (!$('#app').hidden && orders.length) render(); }, 60000);
+})();
+</script>
+</body>
+</html>
