@@ -3,16 +3,18 @@
  *   GET    /api/orders?since=N    el panel lista los pedidos (necesita clave)
  *   PATCH  /api/orders            el panel cambia estado / cobrado / nota
  *   DELETE /api/orders?id=...     el panel borra un pedido cancelado
- * Variables de entorno: ADMIN_PIN, y la base de datos de Upstash
- * (KV_REST_API_URL + KV_REST_API_TOKEN, o UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).
+ * Variables de entorno: ADMIN_PIN y la base de datos: REDIS_URL (Redis Cloud, conexión directa)
+ * o, como alternativa, Upstash por REST (KV_REST_API_URL + KV_REST_API_TOKEN).
  * Todas las llaves usan el prefijo "crj:" para no mezclarse con otros proyectos.
  */
 'use strict';
 const crypto = require('crypto');
 const MENU = require('./_menu.json');
 
+const REDIS_URL = process.env.REDIS_URL || '';
 const DB_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
 const DB_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+const HAS_DB = !!REDIS_URL || !!(DB_URL && DB_TOKEN);
 const P = 'crj:';
 
 const STATUSES = ['nuevo', 'preparando', 'listo', 'entregado', 'cancelado'];
@@ -20,7 +22,86 @@ const KEEP = 800;          // pedidos que lista el panel
 const MAX_LINES = 40;      // líneas distintas por pedido
 const MAX_QTY = 50;        // unidades por línea
 
+/* Conexión directa a Redis Cloud con el protocolo de Redis (RESP), sin librerías externas.
+ * Se reutiliza la conexión entre llamadas de la misma función. */
+const net = require('net');
+const tls = require('tls');
+let conn = null;
+function connectRedis() {
+  if (conn) return conn;
+  conn = new Promise(function (resolve, reject) {
+    const u = new URL(REDIS_URL);
+    const secure = u.protocol === 'rediss:';
+    const opts = { host: u.hostname, port: Number(u.port || 6379) };
+    const sock = secure ? tls.connect(Object.assign({ servername: u.hostname }, opts)) : net.connect(opts);
+    const state = { sock: sock, buf: Buffer.alloc(0), queue: [] };
+    sock.setNoDelay(true);
+    sock.setTimeout(8000);
+    function fail(e) {
+      conn = null;
+      state.queue.splice(0).forEach(function (q) { q.reject(e); });
+      try { sock.destroy(); } catch (x) {}
+      reject(e);
+    }
+    sock.on('timeout', function () { fail(new Error('redis timeout')); });
+    sock.on('error', fail);
+    sock.on('close', function () { conn = null; state.queue.splice(0).forEach(function (q) { q.reject(new Error('redis closed')); }); });
+    sock.on('data', function (d) {
+      state.buf = state.buf.length ? Buffer.concat([state.buf, d]) : d;
+      for (;;) {
+        const r = parseReply(state.buf, 0);
+        if (!r) break;
+        state.buf = state.buf.slice(r.end);
+        const q = state.queue.shift();
+        if (q) { if (r.value instanceof Error) q.reject(r.value); else q.resolve(r.value); }
+      }
+    });
+    state.send = function (args) {
+      return new Promise(function (res2, rej2) {
+        state.queue.push({ resolve: res2, reject: rej2 });
+        let out = '*' + args.length + '\r\n';
+        args.forEach(function (x) { const s2 = String(x); out += '$' + Buffer.byteLength(s2) + '\r\n' + s2 + '\r\n'; });
+        sock.write(out);
+      });
+    };
+    sock.once(secure ? 'secureConnect' : 'connect', function () {
+      const user = decodeURIComponent(u.username || ''), pass = decodeURIComponent(u.password || '');
+      const auth = pass ? state.send(user && user !== 'default' ? ['AUTH', user, pass] : ['AUTH', pass]) : Promise.resolve('OK');
+      auth.then(function () { resolve(state); }, fail);
+    });
+  });
+  return conn;
+}
+function parseReply(buf, i) {
+  const nl = buf.indexOf('\r\n', i);
+  if (nl < 0) return null;
+  const type = String.fromCharCode(buf[i]);
+  const line = buf.toString('utf8', i + 1, nl);
+  const next = nl + 2;
+  if (type === '+') return { value: line, end: next };
+  if (type === '-') return { value: new Error(line), end: next };
+  if (type === ':') return { value: Number(line), end: next };
+  if (type === '$') {
+    const n = Number(line);
+    if (n < 0) return { value: null, end: next };
+    if (buf.length < next + n + 2) return null;
+    return { value: buf.toString('utf8', next, next + n), end: next + n + 2 };
+  }
+  if (type === '*') {
+    const n = Number(line);
+    if (n < 0) return { value: null, end: next };
+    const arr = []; let p = next;
+    for (let k = 0; k < n; k++) { const r = parseReply(buf, p); if (!r) return null; arr.push(r.value); p = r.end; }
+    return { value: arr, end: p };
+  }
+  return { value: new Error('redis protocol'), end: next };
+}
+
 async function db(cmds) {
+  if (REDIS_URL) {
+    const c = await connectRedis();
+    return Promise.all(cmds.map(function (cmd) { return c.send(cmd); }));   // se envían en tubería, en orden
+  }
   const r = await fetch(DB_URL + '/pipeline', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + DB_TOKEN, 'Content-Type': 'application/json' },
@@ -204,7 +285,7 @@ async function deleteOrder(req, res) {
 
 module.exports = async function handler(req, res) {
   try {
-    if (!DB_URL || !DB_TOKEN) return send(res, 503, { error: 'db_not_configured' });
+    if (!HAS_DB) return send(res, 503, { error: 'db_not_configured' });
     if (req.method === 'POST') return await createOrder(req, res);
     if (req.method === 'GET') return await listOrders(req, res);
     if (req.method === 'PATCH') return await patchOrder(req, res);
