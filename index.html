@@ -2198,15 +2198,11 @@ setInterval(pintarEstado, 60000);
     const texto = limpiarVoz(t); if (!texto) return;
     try {
       window.speechSynthesis.cancel();
-      setTimeout(() => {
-        try {
-          window.speechSynthesis.resume();
-          const u = new SpeechSynthesisUtterance(texto);
-          const v = vozES(); if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
-          u.rate = 1.03; u.pitch = 1.05;
-          window.speechSynthesis.speak(u);
-        } catch (e) {}
-      }, 80);
+      window.speechSynthesis.resume();
+      const u = new SpeechSynthesisUtterance(texto);
+      const v = vozES(); if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+      u.rate = 1.02; u.pitch = 1.05; u.volume = 1;
+      window.speechSynthesis.speak(u);
     } catch (e) {}
   }
   function pintarVoz() { if (!vozBtn) return; vozBtn.innerHTML = vozOn ? ICO_VOZ_ON : ICO_VOZ_OFF; vozBtn.setAttribute('aria-pressed', vozOn ? 'true' : 'false'); vozBtn.setAttribute('aria-label', vozOn ? 'Desactivar voz' : 'Activar voz'); vozBtn.classList.toggle('on', vozOn); }
