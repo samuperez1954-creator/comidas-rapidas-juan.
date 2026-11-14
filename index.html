@@ -2159,6 +2159,11 @@ setInterval(pintarEstado, 60000);
     document.body.classList.remove('asis-open');
     fab.setAttribute('aria-expanded', 'false');
     fabIco.innerHTML = chatSVG;
+    // Borrar la conversación: al abrir de nuevo empieza limpio
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+    try { if (rec && escuchando) rec.stop(); } catch (e) {}
+    msgs.innerHTML = ''; chipsBox.innerHTML = ''; input.value = '';
+    saludado = false;
   }
   fab.addEventListener('click', () => { abierto_ ? cerrarPanel() : abrirPanel(); });
   document.getElementById('asisClose').addEventListener('click', cerrarPanel);
