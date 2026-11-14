@@ -2097,6 +2097,313 @@ cuponBienvenida();
 ruta(); pintarEstado(); refrescar(); tick();
 setInterval(tick, 1000);
 setInterval(pintarEstado, 60000);
+
+/* ===== Asistente Juanito (insertado) ===== */
+/* ============================ ASISTENTE "JUANITO" ============================
+   Ayudante del menú: responde preguntas, recomienda y agrega al carrito.
+   Funciona en el navegador, sin IA de pago ni conexión a servidores. */
+(function () {
+  const BOT = 'Juanito';
+  const catNombre = {}; CATS.forEach(c => { catNombre[c.id] = c.nombre; });
+  const TODOS = Object.values(ITEMS);
+  const comidas = TODOS.filter(i => i.cat !== 'adiciones' && i.cat !== 'bebidas');
+  const avatarSVG = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11.5h16a0 0 0 0 1 0 0 8 8 0 0 1-8 7.5h0a8 8 0 0 1-8-7.5 0 0 0 0 1 0 0z" fill="#D9A404"/><path d="M5 11.5c0-3.3 3.1-6 7-6s7 2.7 7 6" fill="#A64F03"/><circle cx="9.2" cy="8.6" r="1" fill="#2B1212"/><circle cx="14.8" cy="8.6" r="1" fill="#2B1212"/><path d="M4.6 14h14.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  const chatSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8 8 0 0 1-11.6 7.1L4 20l1.4-5A8 8 0 1 1 21 11.5z"/><path d="M8.5 11.5h7M8.5 14.5h4"/></svg>';
+  const closeSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  /* ---------- UI ---------- */
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<button class="asis-fab" id="asisFab" type="button" aria-label="Abrir el asistente del menú" aria-expanded="false">' +
+      '<span class="asis-fab-ico" id="asisFabIco">' + chatSVG + '</span><span class="asis-dot"></span>' +
+    '</button>' +
+    '<div class="asis-teaser" id="asisTeaser" hidden>¡Hola! ¿Te ayudo a pedir? 👋<button type="button" class="asis-teaser-x" id="asisTeaserX" aria-label="Cerrar">×</button></div>' +
+    '<section class="asis-panel" id="asisPanel" role="dialog" aria-label="Asistente del menú" hidden>' +
+      '<header class="asis-head">' +
+        '<span class="asis-av">' + avatarSVG + '</span>' +
+        '<div class="asis-head-t"><b>' + BOT + '</b><small><i class="asis-on"></i> Asistente · Comidas Rápidas Juan</small></div>' +
+        '<button class="asis-x" id="asisClose" type="button" aria-label="Cerrar">' + closeSVG + '</button>' +
+      '</header>' +
+      '<div class="asis-msgs" id="asisMsgs" aria-live="polite"></div>' +
+      '<div class="asis-chips" id="asisChips"></div>' +
+      '<form class="asis-form" id="asisForm" autocomplete="off">' +
+        '<input id="asisInput" type="text" placeholder="Escribe tu pregunta…" aria-label="Escribe tu pregunta" maxlength="140">' +
+        '<button type="submit" class="asis-send" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg></button>' +
+      '</form>' +
+    '</section>';
+  document.body.appendChild(wrap);
+
+  const panel = document.getElementById('asisPanel');
+  const fab = document.getElementById('asisFab');
+  const fabIco = document.getElementById('asisFabIco');
+  const msgs = document.getElementById('asisMsgs');
+  const chipsBox = document.getElementById('asisChips');
+  const form = document.getElementById('asisForm');
+  const input = document.getElementById('asisInput');
+  const teaser = document.getElementById('asisTeaser');
+  let abierto_ = false, saludado = false, teaserHecho = false;
+
+  function abrirPanel() {
+    panel.hidden = false; abierto_ = true;
+    document.body.classList.add('asis-open');
+    fab.setAttribute('aria-expanded', 'true');
+    fabIco.innerHTML = closeSVG;
+    ocultarTeaser();
+    if (!saludado) { saludado = true; bienvenida(); }
+    setTimeout(() => { try { input.focus(); } catch (e) {} }, 120);
+  }
+  function cerrarPanel() {
+    panel.hidden = true; abierto_ = false;
+    document.body.classList.remove('asis-open');
+    fab.setAttribute('aria-expanded', 'false');
+    fabIco.innerHTML = chatSVG;
+  }
+  fab.addEventListener('click', () => { abierto_ ? cerrarPanel() : abrirPanel(); });
+  document.getElementById('asisClose').addEventListener('click', cerrarPanel);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && abierto_) cerrarPanel(); });
+
+  function ocultarTeaser() { teaser.hidden = true; }
+  document.getElementById('asisTeaserX').addEventListener('click', e => { e.stopPropagation(); ocultarTeaser(); teaserHecho = true; });
+  teaser.addEventListener('click', () => { if (!abierto_) abrirPanel(); });
+  setTimeout(() => { if (!abierto_ && !teaserHecho) { teaser.hidden = false; teaserHecho = true; setTimeout(() => { if (!abierto_) ocultarTeaser(); }, 9000); } }, 4500);
+
+  /* ---------- Render ---------- */
+  const fmtTxt = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  const scroll = () => { msgs.scrollTop = msgs.scrollHeight; };
+  function msgUsuario(t) {
+    const d = document.createElement('div'); d.className = 'asis-m user';
+    d.innerHTML = '<div class="asis-bub">' + fmtTxt(t) + '</div>';
+    msgs.appendChild(d); scroll();
+  }
+  function cardMini(i) {
+    return '<div class="asis-card">' +
+      '<img src="' + esc(i.img) + '" alt="" loading="lazy" onerror="this.remove()">' +
+      '<div class="asis-card-bd"><b>' + esc(i.nombre) + '</b>' +
+        (i.desc ? '<span class="asis-card-d">' + esc(i.desc.length > 72 ? i.desc.slice(0, 72) + '…' : i.desc) + '</span>' : '') +
+        '<div class="asis-card-f"><span class="asis-card-pr">' + fmt(i.precio) + '</span>' +
+        '<span class="asis-card-b"><button type="button" class="asis-mini g" data-ver="' + i.id + '">Ver</button>' +
+        '<button type="button" class="asis-mini" data-add="' + i.id + '">' + (i.opciones ? 'Elegir' : 'Agregar') + '</button></span></div>' +
+      '</div></div>';
+  }
+  function pintarChips(chips) {
+    chipsBox.innerHTML = (chips || []).map(c => '<button type="button" class="asis-chip" data-chip="' + esc(c.q || c) + '">' + esc(c.t || c) + '</button>').join('');
+  }
+  function msgBot(resp) {
+    const d = document.createElement('div'); d.className = 'asis-m bot';
+    let html = '<span class="asis-av sm">' + avatarSVG + '</span><div class="asis-bub">' + fmtTxt(resp.texto);
+    if (resp.items && resp.items.length) html += '<div class="asis-cards">' + resp.items.map(cardMini).join('') + '</div>';
+    d.innerHTML = html + '</div>';
+    msgs.appendChild(d); pintarChips(resp.chips); scroll();
+  }
+  function responder(resp) {
+    const d = document.createElement('div'); d.className = 'asis-m bot'; d.id = 'asisTyping';
+    d.innerHTML = '<span class="asis-av sm">' + avatarSVG + '</span><div class="asis-bub asis-typing"><span></span><span></span><span></span></div>';
+    msgs.appendChild(d); scroll();
+    setTimeout(() => { const t = document.getElementById('asisTyping'); if (t) t.remove(); msgBot(resp); }, 420 + Math.min(420, (resp.texto || '').length * 4));
+  }
+
+  /* ---------- Carrito ---------- */
+  function agregarRapido(id) {
+    const i = ITEMS[id]; if (!i) return;
+    if (i.opciones) { abrirProducto(i); return; }
+    const key = id + '||';
+    const l = cart.get(key); if (l) l.qty += 1; else cart.set(key, { key, id, op: '', nota: '', qty: 1 });
+    refrescar(); toastCarrito(i.nombre);
+  }
+  msgs.addEventListener('click', e => {
+    const v = e.target.closest('[data-ver]'); if (v) { abrirProducto(ITEMS[v.dataset.ver]); return; }
+    const a = e.target.closest('[data-add]'); if (a) agregarRapido(a.dataset.add);
+  });
+  chipsBox.addEventListener('click', e => { const c = e.target.closest('[data-chip]'); if (c) enviar(c.dataset.chip); });
+  form.addEventListener('submit', e => { e.preventDefault(); const t = input.value.trim(); if (t) { input.value = ''; enviar(t); } });
+
+  /* ---------- Entrada ---------- */
+  function enviar(t) {
+    if (!abierto_) abrirPanel();
+    const k = N(t);
+    if (t === '__maps' || k === 'abrir en google maps') { msgUsuario('¿Dónde quedan?'); window.open($('#mapLink').href, '_blank', 'noopener'); return; }
+    if (t === '__wa' || k === 'abrir whatsapp') { msgUsuario('Quiero escribir por WhatsApp'); window.open(waHola, '_blank', 'noopener'); return; }
+    if (t === '__cupon' || k === 'aplicar juan15') {
+      msgUsuario('Aplicar mi cupón de bienvenida');
+      try { cuponBienvenida(); aplicar('JUAN15', true); } catch (e) {}
+      responder({ texto: '✅ ¡Listo! Apliqué tu **15% de bienvenida (JUAN15)**. Se verá reflejado en el carrito al finalizar. ¿Armamos el pedido?', chips: [{ t: '🍔 Recomiéndame', q: 'recomiéndame algo' }, { t: '🛒 Ver carrito', q: 'ver carrito' }] });
+      return;
+    }
+    msgUsuario(t);
+    const r = cerebro(t);
+    responder(r);
+    if (r.abrir) setTimeout(() => { if (r.abrir === 'carrito') { try { abrirCarrito(); } catch (e) { location.hash = 'carrito'; } } else { location.hash = 'menu'; } if (window.innerWidth < 560) cerrarPanel(); }, 560);
+  }
+
+  /* ============================ CEREBRO ============================ */
+  const N = s => norm(s || '');
+  const INDEX = TODOS.map(i => ({ i, k: N(i.nombre + ' ' + (i.desc || '') + ' ' + catNombre[i.cat]) }));
+  const TOP_IDS = ['perro-especial', 'hamburguesa-especial', 'salchipapa-especial', 'picada-2', 'nachos-especiales', 'chuzo-pechuga', 'alitas-2', 'combo-2', 'perra-7xl', 'mega-salchi-brutal'];
+  const tops = () => TOP_IDS.map(id => ITEMS[id]).filter(Boolean);
+  const dinero = n => fmt(n);
+  const CHIPS_BASE = [
+    { t: '🍔 Recomiéndame', q: 'recomiéndame algo' },
+    { t: '💰 Algo económico', q: 'algo económico' },
+    { t: '👪 Para compartir', q: 'para compartir' },
+    { t: '🍽️ Mexicana', q: 'comida mexicana' },
+    { t: '🕒 ¿Están abiertos?', q: 'están abiertos' },
+    { t: '🛵 Domicilios', q: 'domicilios' }
+  ];
+  const chipsMenu = [{ t: '🍔 Recomiéndame', q: 'recomiéndame algo' }, { t: '🛒 Ver carrito', q: 'ver carrito' }, { t: '🛢 WhatsApp', q: 'whatsapp' }];
+
+  function bienvenida() {
+    msgBot({
+      texto: '¡Hola! 👋 Soy **' + BOT + '**, tu asistente de **' + NEGOCIO + '**.\n' +
+        (abierto() ? 'Estamos **abiertos** ahora mismo. ' : 'Ahora estamos cerrados, pero puedes dejar tu pedido listo. ') +
+        'Te recomiendo platos, te digo precios, resuelvo dudas de domicilios y te ayudo a armar el pedido. ¿Qué se te antoja?',
+      chips: CHIPS_BASE
+    });
+  }
+
+  const porCat = (cat, n) => { let a = TODOS.filter(i => i.cat === cat); a.sort((x, y) => (y.top ? 1 : 0) - (x.top ? 1 : 0) || x.precio - y.precio); return n ? a.slice(0, n) : a; };
+  const buscar = q => {
+    const toks = N(q).split(/\s+/).filter(w => w.length > 2 && !['que', 'con', 'los', 'las', 'una', 'uno', 'del', 'por', 'para', 'tienen', 'tiene', 'hay', 'algo', 'quiero', 'dame', 'sin', 'cuanto', 'vale', 'cuesta', 'precio'].includes(w));
+    if (!toks.length) return [];
+    return INDEX.map(({ i, k }) => { let s = 0; toks.forEach(w => { if (k.includes(w)) s += (N(i.nombre).includes(w) ? 3 : 1); }); return { i, s }; })
+      .filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.i);
+  };
+  function parsePlata(t) {
+    let m = t.match(/\$?\s*(\d{1,3})[.,](\d{3})\b/); if (m) return parseInt(m[1] + m[2], 10);
+    m = t.match(/\b(\d{4,6})\b/); if (m) { const n = parseInt(m[1], 10); if (n >= 2000 && n <= 300000) return n; }
+    m = t.match(/\b(\d{1,3})\s*(mil|k|lucas?)\b/); if (m) return parseInt(m[1], 10) * 1000;
+    m = N(t).match(/\b(diez|quince|veinte|veinticinco|treinta|cuarenta|cincuenta|sesenta)\s*mil\b/);
+    if (m) return ({ diez: 10, quince: 15, veinte: 20, veinticinco: 25, treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60 })[m[1]] * 1000;
+    return null;
+  }
+  function parsePersonas(t) {
+    let m = t.match(/\bpara\s+(\d{1,2})\b/) || t.match(/\bsomos\s+(\d{1,2})\b/) || t.match(/\b(\d{1,2})\s*person/);
+    if (m) return parseInt(m[1], 10);
+    m = N(t).match(/\bpara\s+(dos|tres|cuatro|cinco|seis)\b/); if (m) return ({ dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6 })[m[1]];
+    if (/famili|compart|grupo|varios|amigos|parche|parcero|todos|reuni|fiesta/.test(N(t))) return 'grupo';
+    return null;
+  }
+  const compartibles = () => TODOS.filter(i => i.cat === 'picadas' || i.cat === 'combos' || /para \d|compartir|familiar|personas|para (dos|tres|cinco)|amor de tres/.test(N(i.nombre + ' ' + i.desc)));
+  const CAT_SINON = [
+    { cat: 'perros-hamburguesas', sub: 'hamburgues', re: /hamburgues|burger/, nombre: 'hamburguesas' },
+    { cat: 'perros-hamburguesas', sub: 'perr', re: /\bperr|hot ?dog|salchicha\b/, nombre: 'perros calientes' },
+    { cat: 'mexicana', re: /mexican|nacho|burro|burrit|quesadill|taco|flauta|petaco|tortilla/, nombre: 'comida mexicana' },
+    { cat: 'papas', re: /salchipap|\bpapa|french|fritas/, nombre: 'papas' },
+    { cat: 'picadas', re: /picad|bandeja|parrill|pizzada/, nombre: 'picadas' },
+    { cat: 'chuzos', re: /chuz|pincho|brocheta|desgranad/, nombre: 'chuzos' },
+    { cat: 'alitas', re: /alit|alas|maicit/, nombre: 'alitas' },
+    { cat: 'bebidas', re: /bebida|jugo|gaseos|limonad|refresco|tomar|malteada|\bmilo\b|cerveza|\bsed\b/, nombre: 'bebidas' },
+    { cat: 'arepas-patacones', re: /arepa|patacon|pataco/, nombre: 'arepas y patacones' },
+    { cat: 'combos', re: /combo|derretid/, nombre: 'combos' },
+    { cat: 'cortes', re: /\bcorte|filete|punta de anca|solomo/, nombre: 'cortes de carne' },
+    { cat: 'adicion', re: /adicion|adiciones|\bextra|porcion/, nombre: 'adiciones' }
+  ];
+  const KW_COMIDA = /hamburg|perr|papa|picad|chuz|alit|bebida|arepa|combo|corte|mexican|nacho|burro|quesadill|salchipap|precio|cuanto|domicil|horario|cupon|descuento|promo|recomien|vegetar|picante|barat|economic|compart|persona|pago|pagar|ubicaci|direccion|carrito|whatsapp/;
+
+  function cerebro(txt) {
+    const t = N(txt);
+    const has = re => re.test(t);
+
+    if (/^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|holi|que mas|q mas|quiubo|ola|saludos)\b/.test(t) && !has(KW_COMIDA))
+      return { texto: '¡Hola! 😊 ¿Qué se te antoja hoy? Puedo recomendarte, decirte precios o resolver dudas.', chips: CHIPS_BASE };
+
+    if (/\b(menu|menú|carta)\b|que (venden|tienen|hay)/.test(t) && !has(/hamburg|perr|mexican|papa|picad|chuz|alit|bebida|arepa|combo|corte|nacho|burro/))
+      return { texto: 'Nuestra carta tiene de todo: perros, hamburguesas, comida mexicana, salchipapas, picadas, chuzos, alitas, arepas y bebidas. ¡Más de 60 platos! 😋 Dime qué se te antoja 👇',
+        chips: [{ t: '🍔 Hamburguesas', q: 'hamburguesas' }, { t: '🌭 Perros', q: 'perros' }, { t: '🍟 Papas', q: 'papas' }, { t: '🍽️ Mexicana', q: 'mexicana' }, { t: '👪 Picadas', q: 'picadas' }, { t: '🥤 Bebidas', q: 'bebidas' }] };
+
+    if (/horario|a que hora|abren|cierran|abierto|cerrado|estan abiertos|hasta que hora|ya cerraron/.test(t))
+      return { texto: (abierto() ? '🟢 **Sí, estamos abiertos ahora.** Recibimos pedidos hasta las **11:45 pm**.' : '🔴 Ahora estamos cerrados. **Abrimos a las 4:30 pm.**') +
+        '\n\n🕒 Atendemos **todos los días de 4:30 pm a 11:45 pm**.\n⭐ Las promociones van de 4:30 a 7:30 pm.', chips: CHIPS_BASE };
+
+    if (/domicil|envio|envío|llevan a|reparto|cobertura|cuanto (se )?(demor|tard)|tiempo de entrega|cuanto (vale|cuesta|sale)( el)? (domicil|envio)/.test(t))
+      return { texto: '🛵 **Sí hacemos domicilios** a gran parte de Medellín.\n\n• **Costo:** desde **$ 15.000**, según tu barrio.\n• **Tiempo:** entre **30 y 120 minutos**.\n• También puedes **recoger en tienda** sin costo de domicilio.\n\nEl valor exacto del domicilio te lo confirmamos según tu dirección. ¿Armamos el pedido? 😉',
+        chips: [{ t: '🍔 Recomiéndame', q: 'recomiéndame algo' }, { t: '📍 Ubicación', q: 'ubicación' }, { t: '🛒 Ver carrito', q: 'ver carrito' }] };
+
+    if (/pago|pagar|tarjeta|nequi|efectivo|datafono|daviplata|\bpse\b|contra ?entrega/.test(t))
+      return { texto: '💳 Puedes **pagar en línea** (tarjeta, PSE o Nequi) o **pagar al recibir** (efectivo o transferencia al domiciliario). Si recoges en tienda, pagas allá. ¡Tú eliges! 😊', chips: CHIPS_BASE };
+
+    if (/ubicaci|direccion|donde (estan|queda|es|los)|como llego|\bmapa\b|\bsede\b|donde los encuentro/.test(t))
+      return { texto: '📍 Estamos en **Cra. 81 # 32**, Valle de Aburrá, **Belén, Medellín**. Toca el botón para abrir el mapa 👇',
+        chips: [{ t: '🗺️ Abrir en Google Maps', q: '__maps' }, { t: '🛵 Domicilios', q: 'domicilios' }, { t: '🕒 Horario', q: 'horario' }] };
+
+    if (/cupon|cupón|descuento|codigo de|código|promo|promocion|oferta|rebaja/.test(t)) {
+      if (/promo|promocion|oferta/.test(t) && !/cupon|cupón|descuento|codigo/.test(t))
+        return { texto: '🔥 Estas son las **promociones** (todos los días de **4:30 a 7:30 pm**):', items: porCat('promociones', 4), chips: [{ t: '🏷️ Cupón de bienvenida', q: 'cupon' }, { t: '🍔 Recomiéndame', q: 'recomiéndame algo' }] };
+      return { texto: '🏷️ ¡Tenemos **15% de descuento de bienvenida** con el cupón **JUAN15**! Se aplica a tu primer pedido (no sobre las promociones). ¿Quieres aplicarlo ya?',
+        chips: [{ t: '✅ Aplicar JUAN15', q: '__cupon' }, { t: '🔥 Ver promociones', q: 'promociones' }] };
+    }
+
+    if (/instagram|\binsta\b|tiktok|facebook|redes|síguelos|siguelos/.test(t))
+      return { texto: '📲 Síguenos como **@comidasrapidasjuan** en Instagram, TikTok y Facebook. En la sección **Escáneanos** de la página tienes el código QR con todo.', chips: [{ t: '🛒 Pedir por WhatsApp', q: 'whatsapp' }, { t: '🍔 Recomiéndame', q: 'recomiéndame algo' }] };
+
+    if (/como (pido|pedir|hago|ordeno|funciona|compro)|hacer un pedido|como armo|realizar pedido/.test(t))
+      return { texto: 'Pedir es fácil 👇\n1️⃣ Elige tus platos y toca **Agregar**.\n2️⃣ Abre el **carrito** y escribe tus datos.\n3️⃣ Elige **domicilio** o **recoger en tienda** y la forma de pago.\n4️⃣ Confirma. ¡Listo! Si quieres, te voy agregando cosas. Solo dime qué se te antoja 😉', chips: CHIPS_BASE };
+
+    if (/ver carrito|mi carrito|finalizar|pagar ahora|checkout|ir a pagar|mi pedido|\bcarrito\b/.test(t))
+      return { texto: 'Te llevo al **carrito** para finalizar tu pedido 🛒', chips: chipsMenu, abrir: 'carrito' };
+
+    if (/whatsapp|wasap|\bwpp\b|hablar con (alguien|una persona|un asesor)|asesor|una persona/.test(t))
+      return { texto: 'Claro, puedes escribirnos directo por **WhatsApp** y con gusto te atendemos 👇', chips: [{ t: '🛒 Abrir WhatsApp', q: '__wa' }, { t: '🍔 Mejor recomiéndame', q: 'recomiéndame algo' }] };
+
+    if (/vegetarian|vegan|sin carne/.test(t)) {
+      const v = TODOS.filter(i => /vegetarian|lenteja/.test(N(i.nombre + ' ' + i.desc)));
+      return { texto: '🌱 Sí tenemos opciones **vegetarianas** 👇', items: v, chips: chipsMenu };
+    }
+    if (/picante|picoso|que pique|\bchile\b|\baji\b/.test(t)) {
+      const p = TODOS.filter(i => i.picante);
+      return { texto: '🌶️ Para los que les gusta el **picante** 👇', items: p.length ? p : [ITEMS['petaco']], chips: chipsMenu };
+    }
+
+    const plata = parsePlata(t);
+    const catMatch = CAT_SINON.find(c => c.re.test(t));
+    const esPresu = plata || /barat|economic|económic|poquit|presupuesto|\bplata\b|lo ?mas ?barato|lo minimo|mínimo|poco dinero|rinda/.test(t);
+    if (esPresu && !/domicil|envio/.test(t)) {
+      let pool = catMatch ? TODOS.filter(i => i.cat === catMatch.cat && (!catMatch.sub || N(i.nombre).includes(catMatch.sub))) : comidas.slice();
+      if (plata) pool = pool.filter(i => i.precio <= plata + 1);
+      pool = pool.filter(i => i.precio >= 6000 || !plata);
+      let sel = plata ? pool.sort((a, b) => b.precio - a.precio).slice(0, 4) : pool.sort((a, b) => a.precio - b.precio).slice(0, 4);
+      if (!sel.length) return { texto: 'Con eso lo más cercano que tengo es esto 👇 (o dime para cuánto te alcanza):', items: comidas.slice().sort((a, b) => a.precio - b.precio).slice(0, 4), chips: chipsMenu };
+      return { texto: plata ? 'Con **' + dinero(plata) + '** te alcanza para esto 👇' : 'Lo más **económico** y rico 👇', items: sel, chips: chipsMenu };
+    }
+
+    const pers = parsePersonas(t);
+    if (pers) {
+      let lista = compartibles();
+      if (typeof pers === 'number') {
+        const match = lista.filter(i => new RegExp('\\b' + pers + '\\b|para (dos|tres|cuatro|cinco)').test(N(i.nombre)));
+        lista = (match.length ? match : lista).sort((a, b) => a.precio - b.precio);
+      } else lista = lista.sort((a, b) => b.precio - a.precio);
+      return { texto: (typeof pers === 'number' ? 'Para **' + pers + '** personas' : 'Para **compartir en grupo**') + ' te recomiendo esto, viene bien cargado 😋', items: lista.slice(0, 4), chips: chipsMenu };
+    }
+
+    if (/cuanto (vale|cuesta|sale|es)|precio|valor|a como|a cuanto|que precio/.test(t)) {
+      const res = buscar(txt);
+      if (res.length) return { texto: (res.length === 1 ? 'El **' + res[0].nombre + '** cuesta **' + fmt(res[0].precio) + '** 👇' : 'Mira los precios 👇'), items: res.slice(0, 3), chips: chipsMenu };
+    }
+
+    if (/recomien|recomend|que (me )?(recomiendas|sugieres|pido)|no se que pedir|sorprend|lo mejor|lo mas (pedido|rico|vendido)|favorit|algo rico|delicioso|antojo|tengo hambre|que pido/.test(t))
+      return { texto: '¡Estos son los **más pedidos** y nunca fallan! 😋', items: tops().slice(0, 4), chips: [{ t: '💰 Algo económico', q: 'algo económico' }, { t: '👪 Para compartir', q: 'para compartir' }, { t: '🍽️ Mexicana', q: 'mexicana' }, { t: '🌭 Perros', q: 'perros' }] };
+
+    if (catMatch) {
+      let lista = TODOS.filter(i => i.cat === catMatch.cat);
+      if (catMatch.sub) lista = lista.filter(i => N(i.nombre).includes(catMatch.sub));
+      lista.sort((a, b) => (b.top ? 1 : 0) - (a.top ? 1 : 0) || a.precio - b.precio);
+      return { texto: 'Mira nuestras **' + catMatch.nombre + '** 😋' + (lista.length > 4 ? ' (te muestro algunas, hay ' + lista.length + '):' : ':'), items: lista.slice(0, 4), chips: chipsMenu };
+    }
+
+    const res = buscar(txt);
+    if (res.length) {
+      const preguntaPrecio = /cuanto (vale|cuesta|sale)|precio|valor|a como/.test(t);
+      if (res.length === 1 || preguntaPrecio)
+        return { texto: (preguntaPrecio ? 'El **' + res[0].nombre + '** cuesta **' + fmt(res[0].precio) + '** 👇' : 'Sí, tenemos **' + res[0].nombre + '** 👇'), items: res.slice(0, 3), chips: chipsMenu };
+      return { texto: 'Encontré esto que puede gustarte 👇', items: res.slice(0, 4), chips: chipsMenu };
+    }
+
+    return { texto: 'Mmm, de eso no estoy seguro 😅, pero te ayudo con el menú: puedo recomendarte, darte precios o resolver dudas de **domicilios, horarios y pagos**. Si prefieres, escríbenos por WhatsApp.',
+      chips: [{ t: '🍔 Recomiéndame', q: 'recomiéndame algo' }, { t: '💰 Algo económico', q: 'algo económico' }, { t: '🕒 Horario', q: 'horario' }, { t: '🛒 WhatsApp', q: 'whatsapp' }] };
+  }
+})();
+
+
 })();
 </script>
 <script src="/extra.js" defer></script>
