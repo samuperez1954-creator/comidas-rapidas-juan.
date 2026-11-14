@@ -2151,6 +2151,7 @@ setInterval(pintarEstado, 60000);
     fab.setAttribute('aria-expanded', 'true');
     fabIco.innerHTML = closeSVG;
     ocultarTeaser();
+    try { desbloquearVoz(); } catch (e) {}
     if (!saludado) { saludado = true; bienvenida(); }
     setTimeout(() => { try { input.focus(); } catch (e) {} }, 120);
   }
@@ -2187,20 +2188,32 @@ setInterval(pintarEstado, 60000);
   if (PUEDE_HABLAR) { cargarVoces(); try { window.speechSynthesis.onvoiceschanged = cargarVoces; } catch (e) {} }
   function vozES() { if (!voces.length) cargarVoces(); return voces.find(v => /es[-_]?(CO|419|MX|US)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null; }
   const limpiarVoz = t => String(t || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/[#_`>]/g, '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️⃣]/gu, '').replace(/\s+/g, ' ').trim();
+  let ttsWarm = false;
+  function desbloquearVoz() {
+    if (!PUEDE_HABLAR || ttsWarm) return;
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); ttsWarm = true; } catch (e) {}
+  }
   function hablar(t) {
     if (!PUEDE_HABLAR || !vozOn) return;
+    const texto = limpiarVoz(t); if (!texto) return;
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(limpiarVoz(t));
-      const v = vozES(); if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
-      u.rate = 1.03; u.pitch = 1.05;
-      window.speechSynthesis.speak(u);
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.resume();
+          const u = new SpeechSynthesisUtterance(texto);
+          const v = vozES(); if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+          u.rate = 1.03; u.pitch = 1.05;
+          window.speechSynthesis.speak(u);
+        } catch (e) {}
+      }, 80);
     } catch (e) {}
   }
   function pintarVoz() { if (!vozBtn) return; vozBtn.innerHTML = vozOn ? ICO_VOZ_ON : ICO_VOZ_OFF; vozBtn.setAttribute('aria-pressed', vozOn ? 'true' : 'false'); vozBtn.setAttribute('aria-label', vozOn ? 'Desactivar voz' : 'Activar voz'); vozBtn.classList.toggle('on', vozOn); }
   if (PUEDE_HABLAR && vozBtn) {
     pintarVoz();
     vozBtn.addEventListener('click', () => {
+      desbloquearVoz();
       vozOn = !vozOn; try { sessionStorage.setItem('crv_voz', vozOn ? '1' : '0'); } catch (e) {}
       pintarVoz();
       if (vozOn) hablar('Listo, ahora te hablo. ¿En qué te ayudo?'); else { try { window.speechSynthesis.cancel(); } catch (e) {} }
@@ -2214,8 +2227,14 @@ setInterval(pintarEstado, 60000);
       rec.onstart = () => { escuchando = true; micBtn.classList.add('rec'); input.placeholder = 'Escuchando…'; };
       const fin = () => { escuchando = false; micBtn.classList.remove('rec'); input.placeholder = 'Escribe tu pregunta…'; };
       rec.onend = fin; rec.onerror = fin;
-      rec.onresult = e => { const txt = ((e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '').trim(); if (txt) { if (PUEDE_HABLAR && !vozOn) { vozOn = true; try { sessionStorage.setItem('crv_voz', '1'); } catch (x) {} pintarVoz(); } enviar(txt); } };
-      micBtn.addEventListener('click', () => { if (!abierto_) abrirPanel(); if (escuchando) { try { rec.stop(); } catch (e) {} return; } try { if (window.speechSynthesis) window.speechSynthesis.cancel(); rec.start(); } catch (e) {} });
+      rec.onresult = e => { const txt = ((e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '').trim(); if (txt) { if (PUEDE_HABLAR) { vozOn = true; try { sessionStorage.setItem('crv_voz', '1'); } catch (x) {} pintarVoz(); } enviar(txt); } };
+      micBtn.addEventListener('click', () => {
+        if (!abierto_) abrirPanel();
+        desbloquearVoz();
+        if (escuchando) { try { rec.stop(); } catch (e) {} return; }
+        try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+        setTimeout(() => { try { rec.start(); } catch (e) { escuchando = false; micBtn.classList.remove('rec'); try { rec.stop(); } catch (_) {} } }, 160);
+      });
     } catch (e) { micBtn.hidden = true; }
   }
 
