@@ -2362,7 +2362,7 @@ setInterval(pintarEstado, 60000);
       return { texto: '¡Hola! 😊 ¿Qué se te antoja hoy? Puedo recomendarte, decirte precios o resolver dudas.', chips: CHIPS_BASE };
 
     if (/\b(menu|menú|carta)\b|que (venden|tienen|hay)/.test(t) && !has(/hamburg|perr|mexican|papa|picad|chuz|alit|bebida|arepa|combo|corte|nacho|burro/))
-      return { texto: 'Nuestra carta tiene de todo: perros, hamburguesas, comida mexicana, salchipapas, picadas, chuzos, alitas, arepas y bebidas. ¡Más de 60 platos! 😋 Dime qué se te antoja 👇',
+      return { texto: 'Nuestra carta tiene de todo: perros, hamburguesas, comida mexicana, salchipapas, picadas, chuzos, alitas, arepas y bebidas. ¡60 platos! 😋 Dime qué se te antoja 👇',
         chips: [{ t: '🍔 Hamburguesas', q: 'hamburguesas' }, { t: '🌭 Perros', q: 'perros' }, { t: '🍟 Papas', q: 'papas' }, { t: '🍽️ Mexicana', q: 'mexicana' }, { t: '👪 Picadas', q: 'picadas' }, { t: '🥤 Bebidas', q: 'bebidas' }] };
 
     if (/horario|a que hora|abren|cierran|abierto|cerrado|estan abiertos|hasta que hora|ya cerraron/.test(t))
