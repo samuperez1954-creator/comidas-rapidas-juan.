@@ -2122,11 +2122,13 @@ setInterval(pintarEstado, 60000);
       '<header class="asis-head">' +
         '<span class="asis-av">' + avatarSVG + '</span>' +
         '<div class="asis-head-t"><b>' + BOT + '</b><small><i class="asis-on"></i> Asistente · Comidas Rápidas Juan</small></div>' +
+        '<button class="asis-x asis-voz" id="asisVoz" type="button" aria-label="Activar voz" aria-pressed="false" title="Leer respuestas en voz alta"></button>' +
         '<button class="asis-x" id="asisClose" type="button" aria-label="Cerrar">' + closeSVG + '</button>' +
       '</header>' +
       '<div class="asis-msgs" id="asisMsgs" aria-live="polite"></div>' +
       '<div class="asis-chips" id="asisChips"></div>' +
       '<form class="asis-form" id="asisForm" autocomplete="off">' +
+        '<button type="button" class="asis-mic" id="asisMic" aria-label="Hablar" title="Habla y yo te escucho" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button>' +
         '<input id="asisInput" type="text" placeholder="Escribe tu pregunta…" aria-label="Escribe tu pregunta" maxlength="140">' +
         '<button type="submit" class="asis-send" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg></button>' +
       '</form>' +
@@ -2167,6 +2169,51 @@ setInterval(pintarEstado, 60000);
   teaser.addEventListener('click', () => { if (!abierto_) abrirPanel(); });
   setTimeout(() => { if (!abierto_ && !teaserHecho) { teaser.hidden = false; teaserHecho = true; setTimeout(() => { if (!abierto_) ocultarTeaser(); }, 9000); } }, 4500);
 
+  /* ---------- Voz: hablar y escuchar (gratis, en el navegador) ---------- */
+  const vozBtn = document.getElementById('asisVoz');
+  const micBtn = document.getElementById('asisMic');
+  const PUEDE_HABLAR = ('speechSynthesis' in window) && (typeof SpeechSynthesisUtterance !== 'undefined');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const ICO_VOZ_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.6a4 4 0 0 1 0 6.8M18.6 6a7 7 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const ICO_VOZ_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  let vozOn = false; try { vozOn = sessionStorage.getItem('crv_voz') === '1'; } catch (e) {}
+  let voces = [];
+  function cargarVoces() { try { voces = window.speechSynthesis.getVoices() || []; } catch (e) {} }
+  if (PUEDE_HABLAR) { cargarVoces(); try { window.speechSynthesis.onvoiceschanged = cargarVoces; } catch (e) {} }
+  function vozES() { if (!voces.length) cargarVoces(); return voces.find(v => /es[-_]?(CO|419|MX|US)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null; }
+  const limpiarVoz = t => String(t || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/[#_`>]/g, '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️⃣]/gu, '').replace(/\s+/g, ' ').trim();
+  function hablar(t) {
+    if (!PUEDE_HABLAR || !vozOn) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(limpiarVoz(t));
+      const v = vozES(); if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+      u.rate = 1.03; u.pitch = 1.05;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function pintarVoz() { if (!vozBtn) return; vozBtn.innerHTML = vozOn ? ICO_VOZ_ON : ICO_VOZ_OFF; vozBtn.setAttribute('aria-pressed', vozOn ? 'true' : 'false'); vozBtn.setAttribute('aria-label', vozOn ? 'Desactivar voz' : 'Activar voz'); vozBtn.classList.toggle('on', vozOn); }
+  if (PUEDE_HABLAR && vozBtn) {
+    pintarVoz();
+    vozBtn.addEventListener('click', () => {
+      vozOn = !vozOn; try { sessionStorage.setItem('crv_voz', vozOn ? '1' : '0'); } catch (e) {}
+      pintarVoz();
+      if (vozOn) hablar('Listo, ahora te hablo. ¿En qué te ayudo?'); else { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    });
+  } else if (vozBtn) { vozBtn.remove(); }
+  let rec = null, escuchando = false;
+  if (SR && micBtn) {
+    micBtn.hidden = false;
+    try {
+      rec = new SR(); rec.lang = 'es-CO'; rec.interimResults = false; rec.maxAlternatives = 1; rec.continuous = false;
+      rec.onstart = () => { escuchando = true; micBtn.classList.add('rec'); input.placeholder = 'Escuchando…'; };
+      const fin = () => { escuchando = false; micBtn.classList.remove('rec'); input.placeholder = 'Escribe tu pregunta…'; };
+      rec.onend = fin; rec.onerror = fin;
+      rec.onresult = e => { const txt = ((e.results[0] && e.results[0][0] && e.results[0][0].transcript) || '').trim(); if (txt) { if (PUEDE_HABLAR && !vozOn) { vozOn = true; try { sessionStorage.setItem('crv_voz', '1'); } catch (x) {} pintarVoz(); } enviar(txt); } };
+      micBtn.addEventListener('click', () => { if (!abierto_) abrirPanel(); if (escuchando) { try { rec.stop(); } catch (e) {} return; } try { if (window.speechSynthesis) window.speechSynthesis.cancel(); rec.start(); } catch (e) {} });
+    } catch (e) { micBtn.hidden = true; }
+  }
+
   /* ---------- Render ---------- */
   const fmtTxt = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   const scroll = () => { msgs.scrollTop = msgs.scrollHeight; };
@@ -2187,13 +2234,16 @@ setInterval(pintarEstado, 60000);
   }
   function pintarChips(chips) {
     chipsBox.innerHTML = (chips || []).map(c => '<button type="button" class="asis-chip" data-chip="' + esc(c.q || c) + '">' + esc(c.t || c) + '</button>').join('');
+    chipsBox.scrollLeft = 0;
   }
+  chipsBox.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && chipsBox.scrollWidth > chipsBox.clientWidth) { chipsBox.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
   function msgBot(resp) {
     const d = document.createElement('div'); d.className = 'asis-m bot';
     let html = '<span class="asis-av sm">' + avatarSVG + '</span><div class="asis-bub">' + fmtTxt(resp.texto);
     if (resp.items && resp.items.length) html += '<div class="asis-cards">' + resp.items.map(cardMini).join('') + '</div>';
     d.innerHTML = html + '</div>';
     msgs.appendChild(d); pintarChips(resp.chips); scroll();
+    hablar(resp.texto);
   }
   function responder(resp) {
     const d = document.createElement('div'); d.className = 'asis-m bot'; d.id = 'asisTyping';
